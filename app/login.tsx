@@ -5,6 +5,8 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { Stack, router } from "expo-router";
 import { useState } from "react";
@@ -32,6 +34,7 @@ export default function Login() {
   };
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
     <View className="flex-1 bg-white p-6">
       <Stack.Screen
         options={{
@@ -123,5 +126,6 @@ export default function Login() {
         </View>
       </View>
     </View>
+    </TouchableWithoutFeedback>
   );
 }
