@@ -1,14 +1,13 @@
 import { View, Text, TouchableOpacity, ScrollView, Modal } from "react-native";
-import { Link, Stack, router } from "expo-router";
+import { Stack, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LandingPage() {
-
   return (
     <SafeAreaView className="flex-1 bg-white">
       <Stack.Screen
         options={{
-          headerShown: true,
+          headerShown: false,
           title: "Home",
         }}
       />
@@ -34,7 +33,14 @@ export default function LandingPage() {
             {/* Audit Card */}
             <TouchableOpacity
               className="bg-blue-50 w-[100%] rounded-xl p-4 mb-4 shadow-sm"
-              onPress={() => router.push("/screen/Audit/audit")}
+              onPress={() =>
+                router.push({
+                  pathname: "/screens/audit",
+                  params: {
+                    vehicleType: "car",
+                  },
+                })
+              }
             >
               <View className="bg-blue-500 w-12 h-12 rounded-full items-center justify-center mb-3">
                 <Text className="text-white text-xl">📋</Text>

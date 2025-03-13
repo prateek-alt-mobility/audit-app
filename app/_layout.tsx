@@ -15,7 +15,7 @@ import { store } from "./store";
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 import "../global.css";
-import { View,Text } from "react-native";
+import { View, Text, SafeAreaView } from "react-native";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
