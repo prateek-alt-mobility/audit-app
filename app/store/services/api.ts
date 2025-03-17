@@ -40,22 +40,6 @@ export const api = createApi({
         return userData;
       },
     }),
-    logout: builder.mutation<void, void>({
-      query: () => ({
-        url: '/auth/logout',
-        method: 'POST',
-      }),
-      // Even if the API call fails, we want to clear local storage
-      async onQueryStarted(_, { queryFulfilled }) {
-        try {
-          await queryFulfilled;
-        } finally {
-          await AsyncStorage.removeItem('user');
-          await AsyncStorage.removeItem('auth_token');
-          await AsyncStorage.removeItem('refresh_token');
-        }
-      },
-    }),
     // Add more endpoints here as needed
   }),
 });
@@ -70,8 +54,4 @@ export const clearLocalStorage = async () => {
 // Export hooks for usage in components
 export const {
   useLoginMutation,
-  useLogoutMutation,
-  // Export other hooks as needed
-  // useGetAuditsQuery,
-  // useCreateAuditMutation,
 } = api;
