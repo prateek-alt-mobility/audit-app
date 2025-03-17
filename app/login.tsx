@@ -8,8 +8,8 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from "react-native";
-import { Stack, router } from "expo-router";
-import { useState, useEffect } from "react";
+import { Stack, useRouter } from "expo-router";
+import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { loginUser } from "./store/slices/authSlice";
 import { Feather } from "@expo/vector-icons";
@@ -26,17 +26,8 @@ export default function Login() {
 
   const dispatch = useAppDispatch();
   const { isLoading, error } = useAppSelector((state) => state.auth);
+  const router = useRouter();
 
-  // Add this effect to handle navigation after successful login
-  useEffect(() => {
-    if (!isLoading && isSubmitting && !error) {
-      // Show a brief loading screen before navigating
-      const timer = setTimeout(() => {
-        router.replace("/");
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, isSubmitting, error]);
 
   const handleLogin = async () => {
     // Reset previous error messages
@@ -66,13 +57,31 @@ export default function Login() {
     setIsSubmitting(true);
     try {
       await dispatch(loginUser({ email, password })).unwrap();
+      router.replace("/");
       // Navigation is now handled by the useEffect
     } catch (err) {
       // Error is handled in the reducer
       console.log("Login failed:", err);
       setIsSubmitting(false);
     }
+    finally {
+      setIsSubmitting(false);
+    }
   };
+  if (isSubmitting) {
+    return (
+      <View className="flex-1 bg-white justify-center items-center">
+        <Stack.Screen
+          options={{
+            title: "Login",
+            headerShown: false,
+          }}
+        />
+        <ActivityIndicator size="large" color="black" />
+        <Text className="mt-4 text-gray-600">Logging in...</Text>
+      </View>
+    );
+  }
 
   return (
     <AuthGuard requireAuth={false}>
@@ -84,16 +93,6 @@ export default function Login() {
               headerShown: false,
             }}
           />
-
-          {/* Show loading overlay when submitting and not showing error */}
-          {isSubmitting && !error && !isLoading && (
-            <View className="absolute inset-0 bg-black/30 z-50 flex items-center justify-center">
-              <View className="bg-white p-6 rounded-xl items-center">
-                <ActivityIndicator size="large" color="black" />
-                <Text className="mt-4 font-medium">Logging in...</Text>
-              </View>
-            </View>
-          )}
 
           <View className="flex-1 justify-center">
             <Text className="text-3xl font-bold mb-8 text-center">
@@ -166,9 +165,9 @@ export default function Login() {
               <TouchableOpacity
                 className="bg-black py-4 rounded-xl mt-4 flex-row justify-center items-center space-x-2"
                 onPress={handleLogin}
-                disabled={isLoading || isSubmitting}
+                disabled={isLoading}
               >
-                {isLoading ? (
+                {isLoading? (
                   <ActivityIndicator color="white" />
                 ) : (
                   <>
