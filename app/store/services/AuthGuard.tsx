@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import useAppDispatch, { useAppSelector } from '../hooks';
+import React, { useEffect } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+import { useAppDispatch, useAppSelector } from '../hooks';
 import { checkAuthStatus } from '../slices/authSlice';
 // import { useAppSelector, useAppDispatch } from '../store/hooks';
 // import { checkAuthStatus } from '../store/slices/authSlice';
