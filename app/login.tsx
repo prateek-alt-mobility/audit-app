@@ -1,19 +1,17 @@
-import React from "react";
+import { Feather } from "@expo/vector-icons";
+import { Stack, useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
-  View,
+  ActivityIndicator,
   Text,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   TouchableWithoutFeedback,
-  Keyboard,
+  View
 } from "react-native";
-import { Stack, useRouter } from "expo-router";
-import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
-import { loginUser } from "./store/slices/authSlice";
-import { Feather } from "@expo/vector-icons";
 import { AuthGuard } from "./store/services/AuthGuard";
+import { loginUser } from "./store/slices/authSlice";
 
 export default function Login() {
   const [email, setEmail] = useState("");

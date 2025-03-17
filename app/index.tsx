@@ -1,9 +1,9 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { Stack, router } from "expo-router";
+import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppDispatch } from "./store/hooks";
-import { logoutUser } from "./store/slices/authSlice";
 import { AuthGuard } from "./store/services/AuthGuard";
+import { logoutUser } from "./store/slices/authSlice";
 
 export default function LandingPage() {
   const dispatch = useAppDispatch();
@@ -44,7 +44,7 @@ export default function LandingPage() {
               {/* Audit Card */}
               <TouchableOpacity
                 className="bg-blue-50 w-[100%] rounded-xl p-4 mb-4 shadow-sm"
-                onPress={() => router.push("/screen/Audit/audit")}
+                // onPress={() => router.push("/screen/Audit/audit")}
               >
                 <View className="bg-blue-500 w-12 h-12 rounded-full items-center justify-center mb-3">
                   <Text className="text-white text-xl">📋</Text>
