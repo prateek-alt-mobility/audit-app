@@ -11,11 +11,11 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 import { Provider } from "react-redux";
 import { store } from "./store";
+import { checkAuthStatus } from "./store/slices/authSlice";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 import "../global.css";
-
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -27,6 +27,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (loaded) {
+      // Check authentication status when app loads
+      store.dispatch(checkAuthStatus());
       SplashScreen.hideAsync();
     }
   }, [loaded]);

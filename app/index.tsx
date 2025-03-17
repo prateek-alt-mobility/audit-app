@@ -1,58 +1,63 @@
-import { View, Text, TouchableOpacity, ScrollView, Modal } from "react-native";
 import { Stack, router } from "expo-router";
+import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAppDispatch } from "./store/hooks";
+import { AuthGuard } from "./store/services/AuthGuard";
+import { logoutUser } from "./store/slices/authSlice";
 
 export default function LandingPage() {
+  const dispatch = useAppDispatch();
+
+  const handleLogout = async () => {
+    await dispatch(logoutUser());
+    router.replace('/login');
+  };
+
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <Stack.Screen
-        options={{
-          headerShown: false,
-          title: "Home",
-        }}
-      />
-      <View className="flex-1 px-4 py-4">
-        {/* Header with Logo and Logout */}
-        <View className="flex-row justify-between items-center mb-8">
-          <Text className="text-2xl font-bold text-gray-800">Home</Text>
-          <TouchableOpacity
-            className="bg-black px-5 py-2 rounded-full"
-            onPress={() => router.push("/login")}
-          >
-            <Text className="text-white font-semibold">Logout</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Main Navigation Cards */}
-        <View className="flex-1">
-          <Text className="text-xl font-semibold text-gray-700 mb-4">
-            Quick Actions
-          </Text>
-
-          <View className="flex-row flex-wrap justify-between w-full">
-            {/* Audit Card */}
+    <AuthGuard requireAuth={true}>
+      <SafeAreaView className="flex-1 bg-white">
+        <Stack.Screen
+          options={{
+            headerShown: true,
+            title: "Home",
+          }}
+        />
+        <View className="flex-1 px-4 py-4">
+          {/* Header with Logo and Logout */}
+          <View className="flex-row justify-between items-center mb-8">
+            <Text className="text-2xl font-bold text-gray-800">Home</Text>
             <TouchableOpacity
-              className="bg-blue-50 w-[100%] rounded-xl p-4 mb-4 shadow-sm"
-              onPress={() =>
-                router.push({
-                  pathname: "/screens/audit",
-                  params: {
-                    vehicleType: "car",
-                  },
-                })
-              }
+              className="bg-black px-5 py-2 rounded-full"
+              onPress={handleLogout}
             >
-              <View className="bg-blue-500 w-12 h-12 rounded-full items-center justify-center mb-3">
-                <Text className="text-white text-xl">📋</Text>
-              </View>
-              <Text className="text-lg font-bold text-gray-800">Audit</Text>
-              <Text className="text-sm text-gray-600 mt-1">
-                Create new audit report
-              </Text>
+              <Text className="text-white font-semibold">Logout</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Main Navigation Cards */}
+          <View className="flex-1">
+            <Text className="text-xl font-semibold text-gray-700 mb-4">
+              Quick Actions
+            </Text>
+
+            <View className="flex-row flex-wrap justify-between w-full">
+              {/* Audit Card */}
+              <TouchableOpacity
+                className="bg-blue-50 w-[100%] rounded-xl p-4 mb-4 shadow-sm"
+                // onPress={() => router.push("/screen/Audit/audit")}
+              >
+                <View className="bg-blue-500 w-12 h-12 rounded-full items-center justify-center mb-3">
+                  <Text className="text-white text-xl">📋</Text>
+                </View>
+                <Text className="text-lg font-bold text-gray-800">Audit</Text>
+                <Text className="text-sm text-gray-600 mt-1">
+                  Create new audit report
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </AuthGuard>
   );
 }
