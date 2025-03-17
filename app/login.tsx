@@ -1,18 +1,17 @@
-import React from "react";
+import { Feather } from "@expo/vector-icons";
+import { Stack, router } from "expo-router";
+import React, { useState } from "react";
 import {
-  View,
+  ActivityIndicator,
+  Keyboard,
   Text,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
   TouchableWithoutFeedback,
-  Keyboard,
+  View,
 } from "react-native";
-import { Stack, router } from "expo-router";
-import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { loginUser } from "./store/slices/authSlice";
-import { Feather } from "@expo/vector-icons";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -96,9 +95,7 @@ export default function Login() {
 
           {error && <Text className="text-red-500 text-center">{error}</Text>}
 
-          <TouchableOpacity className="items-end">
-            <Text className="text-gray-600">Forgot Password?</Text>
-          </TouchableOpacity>
+         
 
           <TouchableOpacity
             className="bg-black py-4 rounded-xl mt-4 flex-row justify-center items-center space-x-2"
@@ -117,12 +114,7 @@ export default function Login() {
             )}
           </TouchableOpacity>
 
-          <View className="flex-row justify-center mt-4">
-            <Text className="text-gray-600">Don't have an account? </Text>
-            <TouchableOpacity>
-              <Text className="text-black font-semibold">Sign Up</Text>
-            </TouchableOpacity>
-          </View>
+         
         </View>
       </View>
     </View>
