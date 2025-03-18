@@ -9,23 +9,20 @@ import {
   TouchableWithoutFeedback,
   View
 } from "react-native";
-import { useAppDispatch, useAppSelector } from "./store/hooks";
-import { AuthGuard } from "./store/services/AuthGuard";
-import { loginUser } from "./store/slices/authSlice";
+import AuthGuard from "./components/AuthGuard";
+import { useLoginMutation } from "./store/services/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
-  const dispatch = useAppDispatch();
-  const { isLoading, error } = useAppSelector((state) => state.auth);
+  // Use the login mutation hook from RTK Query
+  const [login, { isLoading }] = useLoginMutation();
   const router = useRouter();
-
+  const [errorMessage, setErrorMessage] = useState<any>({});
 
   const handleLogin = async () => {
     // Reset previous error messages
@@ -52,21 +49,18 @@ export default function Login() {
       return;
     }
     
-    setIsSubmitting(true);
     try {
-      await dispatch(loginUser({ email, password })).unwrap();
+      // Use the login mutation directly
+      await login({ email, password }).unwrap();
       router.replace("/");
-      // Navigation is now handled by the useEffect
-    } catch (err) {
-      // Error is handled in the reducer
-      console.log("Login failed:", err);
-      setIsSubmitting(false);
-    }
-    finally {
-      setIsSubmitting(false);
+    } catch (error) {
+      setErrorMessage(error)
+      // Error is handled by RTK Query and the auth slice
+      console.log("Login failed:", error);
     }
   };
-  if (isSubmitting) {
+
+  if (isLoading) {
     return (
       <View className="flex-1 bg-white justify-center items-center">
         <Stack.Screen
@@ -97,7 +91,6 @@ export default function Login() {
               Welcome Back
             </Text>
 
-            {/* Rest of your form remains the same */}
             <View className="space-y-4">
               {/* Email field */}
               <View>
@@ -120,6 +113,7 @@ export default function Login() {
                   />
                 </View>
                 {emailError ? <Text className="text-red-500 mt-1">{emailError}</Text> : null}
+             
               </View>
 
               {/* Password field */}
@@ -154,7 +148,7 @@ export default function Login() {
                 {passwordError ? <Text className="text-red-500 mt-1">{passwordError}</Text> : null}
               </View>
 
-              {error && <Text className="text-red-500 text-center">{error}</Text>}
+              {errorMessage ? <Text className="text-red-500 mt-1 text-center">{errorMessage.data?.message}</Text> : null}
 
               <TouchableOpacity className="items-end">
                 <Text className="text-gray-600">Forgot Password?</Text>
@@ -165,7 +159,7 @@ export default function Login() {
                 onPress={handleLogin}
                 disabled={isLoading}
               >
-                {isLoading? (
+                {isLoading ? (
                   <ActivityIndicator color="white" />
                 ) : (
                   <>

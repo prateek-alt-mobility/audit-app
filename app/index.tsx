@@ -1,18 +1,10 @@
-import { Stack, router } from "expo-router";
+import { Stack } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAppDispatch } from "./store/hooks";
-import { AuthGuard } from "./store/services/AuthGuard";
-import { logoutUser } from "./store/slices/authSlice";
+import AuthGuard from "./components/AuthGuard";
+import { handleLogout } from "./utils/navigation";
 
 export default function LandingPage() {
-  const dispatch = useAppDispatch();
-
-  const handleLogout = async () => {
-    await dispatch(logoutUser());
-    router.replace('/login');
-  };
-
   return (
     <AuthGuard requireAuth={true}>
       <SafeAreaView className="flex-1 bg-white">
