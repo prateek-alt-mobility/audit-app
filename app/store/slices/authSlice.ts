@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createSlice } from "@reduxjs/toolkit";
 import { api } from "../services/api";
 
@@ -73,52 +73,43 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Handle login mutation
-      .addMatcher(
-        api.endpoints.login.matchPending,
-        (state) => {
-          state.isLoading = true;
-          state.error = null;
-        }
-      )
-      .addMatcher(
-        api.endpoints.login.matchFulfilled,
-        (state, { payload }) => {
-          state.isLoading = false;
-          state.isAuthenticated = true;
-          state.user = payload;
-          state.error = null;
-        }
-      )
-      .addMatcher(
-        api.endpoints.login.matchRejected,
-        (state, { error }) => {
-          state.isLoading = false;
-          state.error = error.message || "Login failed";
-        }
-      )
-      // Handle logout mutation
-      .addMatcher(
-        api.endpoints.logout.matchFulfilled,
-        (state) => {
-          state.user = null;
-          state.isAuthenticated = false;
-          state.error = null;
-        }
-      );
+      //Handle login mutation
+      .addMatcher(api.endpoints.login.matchPending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addMatcher(api.endpoints.login.matchFulfilled, (state, { payload }) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.user = payload;
+        state.error = null;
+      })
+      .addMatcher(api.endpoints.login.matchRejected, (state, { error }) => {
+        state.isLoading = false;
+        state.error = error.message || "Login failed";
+      });
+    // Handle logout mutation
+    // .addMatcher(
+    //   api.endpoints.logout.matchFulfilled,
+    //   (state) => {
+    //     state.user = null;
+    //     state.isAuthenticated = false;
+    //     state.error = null;
+    //   }
+    // );
   },
 });
 
 // Export a thunk to check auth status on app startup
 export const checkAuthStatus = () => async (dispatch: any) => {
   try {
-    const userData = await AsyncStorage.getItem('user');
+    const userData = await AsyncStorage.getItem("user");
     if (userData) {
       const user = JSON.parse(userData);
       dispatch(authSlice.actions.checkAuthStatus(user));
     }
   } catch (error) {
-    console.error('Error checking auth status:', error);
+    console.error("Error checking auth status:", error);
   }
 };
 
