@@ -1,3 +1,4 @@
+import AuthGuard from "@/components/AuthGuard";
 import { Feather } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -7,10 +8,9 @@ import {
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View
+  View,
 } from "react-native";
-import AuthGuard from "./components/AuthGuard";
-import { useLoginMutation } from "./store/services/api";
+import { useLoginMutation } from "../store/services/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -28,10 +28,10 @@ export default function Login() {
     // Reset previous error messages
     setEmailError("");
     setPasswordError("");
-    
+
     // Validate inputs
     let isValid = true;
-    
+
     if (!email.trim()) {
       setEmailError("Email is required");
       isValid = false;
@@ -39,22 +39,22 @@ export default function Login() {
       setEmailError("Please enter a valid email");
       isValid = false;
     }
-    
+
     if (!password.trim()) {
       setPasswordError("Password is required");
       isValid = false;
     }
-    
+
     if (!isValid) {
       return;
     }
-    
+
     try {
       // Use the login mutation directly
       await login({ email, password }).unwrap();
       router.replace("/");
     } catch (error) {
-      setErrorMessage(error)
+      setErrorMessage(error);
       // Error is handled by RTK Query and the auth slice
       console.log("Login failed:", error);
     }
@@ -112,8 +112,9 @@ export default function Login() {
                     editable={!isLoading}
                   />
                 </View>
-                {emailError ? <Text className="text-red-500 mt-1">{emailError}</Text> : null}
-             
+                {emailError ? (
+                  <Text className="text-red-500 mt-1">{emailError}</Text>
+                ) : null}
               </View>
 
               {/* Password field */}
@@ -145,10 +146,16 @@ export default function Login() {
                     />
                   </TouchableOpacity>
                 </View>
-                {passwordError ? <Text className="text-red-500 mt-1">{passwordError}</Text> : null}
+                {passwordError ? (
+                  <Text className="text-red-500 mt-1">{passwordError}</Text>
+                ) : null}
               </View>
 
-              {errorMessage ? <Text className="text-red-500 mt-1 text-center">{errorMessage.data?.message}</Text> : null}
+              {errorMessage ? (
+                <Text className="text-red-500 mt-1 text-center">
+                  {errorMessage.data?.message}
+                </Text>
+              ) : null}
 
               <TouchableOpacity className="items-end">
                 <Text className="text-gray-600">Forgot Password?</Text>

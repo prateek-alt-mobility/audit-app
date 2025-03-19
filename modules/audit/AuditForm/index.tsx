@@ -11,9 +11,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
-import { useCreateAuditMutation } from "./store/services/auditApi";
+import { useCreateAuditMutation } from "@store/services/auditApi";
 
 interface AuditImage {
   uri: string;
@@ -27,9 +27,10 @@ export default function AuditForm() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const router = useRouter();
-  
+
   // Use the createAudit mutation from RTK Query
-  const [createAudit, { isLoading, isSuccess, error }] = useCreateAuditMutation();
+  const [createAudit, { isLoading, isSuccess, error }] =
+    useCreateAuditMutation();
 
   // If the audit was successfully created, navigate back to the main screen
   useEffect(() => {
@@ -90,7 +91,7 @@ export default function AuditForm() {
 
       <ScrollView className="flex-1 p-4">
         <View className="items-center my-6">
-          <TouchableOpacity 
+          <TouchableOpacity
             className="bg-gray-100 p-6 rounded-xl items-center justify-center"
             style={{ width: SCREEN_WIDTH * 0.8, height: SCREEN_WIDTH * 0.6 }}
             onPress={pickImage}
@@ -125,9 +126,9 @@ export default function AuditForm() {
 
         {error && (
           <Text className="text-red-500 text-center mb-4">
-            {typeof error === 'object' && 'message' in error 
-              ? error.message as string 
-              : 'An error occurred'}
+            {typeof error === "object" && "message" in error
+              ? (error.message as string)
+              : "An error occurred"}
           </Text>
         )}
 

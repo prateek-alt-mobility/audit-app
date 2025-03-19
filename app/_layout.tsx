@@ -10,8 +10,8 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { Provider } from "react-redux";
-import { store } from "./store";
-import { checkAuthStatus } from "./store/slices/authSlice";
+import { store } from "../store";
+import { checkAuthStatus } from "../store/slices/authSlice";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 
