@@ -7,6 +7,7 @@
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
+    "digest": "sudo rm -rf node_modules && sudo rm -rf yarn.lock && sudo rm -rf package-lock.json && sudo rm -rf yarn-debug.log* && sudo rm -rf yarn-debug.log && sudo rm -rf yarn-error.log* && sudo rm -rf yarn-error.log && sudo rm -rf yarn-debug.log* && sudo rm -rf yarn-debug.log && sudo rm -rf yarn-error.log* && sudo rm -rf yarn-error.log && yarn",
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint"
