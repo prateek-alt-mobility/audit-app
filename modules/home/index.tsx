@@ -1,8 +1,8 @@
 import AuthGuard from "@/components/AuthGuard";
+import { handleLogout } from "@utils/navigation";
 import { Stack, useRouter } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { handleLogout } from "@utils/navigation";
 
 const Homepage: React.FC = () => {
   const router = useRouter();
