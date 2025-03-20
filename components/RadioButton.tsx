@@ -1,5 +1,6 @@
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React from "react";
+import { Text, TouchableOpacity, View } from "react-native";
+
 interface RadioButtonProps {
   options: Array<{
     label: string;
@@ -8,8 +9,8 @@ interface RadioButtonProps {
   }>;
   selectedValue: string;
   onSelect: (value: string) => void;
-  direction?: 'row' | 'column';
-  title?:string,
+  direction?: "row" | "column";
+  title?: string;
   disabled?: boolean;
 }
 
@@ -18,84 +19,46 @@ const RadioButton: React.FC<RadioButtonProps> = ({
   selectedValue,
   onSelect,
   title,
-  direction = 'row',
-  disabled=false
+  direction = "row",
+  disabled = false,
 }) => {
   return (
-   
     <View>
-    {title && <Text style={[styles.title]}>{title}</Text>}
-    <View style={styles.container}>
-      {options.map((option, index) => {
-        const isDisabled = disabled || option.disabled;
-        return (
-          <TouchableOpacity
-            key={index}
-            style={styles.optionContainer}
-            onPress={() => !isDisabled && onSelect(option.value)}
-            disabled={isDisabled}
-          >
-            <View style={[styles.radioOuter, isDisabled && styles.disabledOuter]}>
-              {selectedValue === option.value && (
-                <View style={[styles.radioInner, isDisabled && styles.disabledInner]} />
-              )}
-            </View>
-            <Text style={[styles.label, isDisabled && styles.disabledText]}>
-              {option.label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+      {title && <Text className="text-base mb-2">{title}</Text>}
+      <View
+        className={`flex-row items-center gap-4 ${
+          direction === "column" ? "flex-col" : ""
+        }`}
+      >
+        {options.map((option, index) => {
+          const isDisabled = disabled || option.disabled;
+          return (
+            <TouchableOpacity
+              key={index}
+              className="flex-row items-center mr-4"
+              onPress={() => !isDisabled && onSelect(option.value)}
+              disabled={isDisabled}
+            >
+              <View
+                className={`h-5 w-5 rounded-full border-2 items-center justify-center
+                ${isDisabled ? "border-gray-400" : "border-black"}`}
+              >
+                {selectedValue === option.value && (
+                  <View
+                    className={`h-2.5 w-2.5 rounded-full
+                    ${isDisabled ? "bg-gray-400" : "bg-black"}`}
+                  />
+                )}
+              </View>
+              <Text className={`ml-2 ${isDisabled ? "text-gray-400" : ""}`}>
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
-  </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  optionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  radioOuter: {
-    height: 20,
-    width: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#000',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioInner: {
-    height: 10,
-    width: 10,
-    borderRadius: 5,
-    backgroundColor: '#000',
-  },
-  label: {
-    marginLeft: 8,
-  },
-  title: {
-    fontSize: 16,
-    marginBottom: 8,
-  },
-  disabled: {
-    opacity: 0.6,
-  },
-  disabledText: {
-    color: '#666',
-  },
-  disabledOuter: {
-    borderColor: '#666',
-  },
-  disabledInner: {
-    backgroundColor: '#666',
-  },
-});
 
 export default RadioButton;

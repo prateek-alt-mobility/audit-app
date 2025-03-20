@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import React from "react";
+import { Text, TextInput, View } from "react-native";
 
 interface InputProps {
   label: string;
@@ -8,31 +8,29 @@ interface InputProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   multiline?: boolean;
-  numberOfLines?: number; 
+  numberOfLines?: number;
 }
 
-const Input: React.FC<InputProps> = ({ 
-  label, 
-  placeholder, 
-  value, 
+const Input: React.FC<InputProps> = ({
+  label,
+  placeholder,
+  value,
   onChange,
   disabled = false,
   multiline = false,
-  numberOfLines = 4 
+  numberOfLines = 4,
 }) => {
   return (
-    <View style={styles.container}>
-      <Text style={[
-        styles.label
-      ]}>
-        {label}
-      </Text>
+    <View className="mb-4">
+      <Text className="text-base font-medium mb-2 text-black">{label}</Text>
       <TextInput
-        style={[
-          styles.input,
-          disabled && styles.disabledInput,
-          multiline && styles.textArea
-        ]}
+        className={`w-full p-3 rounded-lg border border-gray-200 bg-white
+          ${
+            disabled
+              ? "bg-gray-100 text-gray-400 border-gray-200 opacity-70"
+              : ""
+          }
+          ${multiline ? "min-h-[100px] text-top" : ""}`}
         placeholder={placeholder}
         placeholderTextColor="#9CA3AF"
         value={value}
@@ -40,45 +38,12 @@ const Input: React.FC<InputProps> = ({
         editable={!disabled}
         multiline={multiline}
         numberOfLines={multiline ? numberOfLines : 1}
-        textAlignVertical={multiline ? 'top' : 'center'}
-        focusable={!disabled} 
+        textAlignVertical={multiline ? "top" : "center"}
+        focusable={!disabled}
         pointerEvents={disabled ? "none" : "auto"}
       />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 8,
-    color: '#000000',
-  },
-  disabledLabel: {
-    color: '#9CA3AF',
-  },
-  input: {
-    width: '100%',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#fff',
-  },
-  disabledInput: {
-    backgroundColor: '#F3F4F6',
-    color: '#9CA3AF',
-    borderColor: '#E5E7EB',
-    opacity: 0.7,
-  },
-  textArea: {
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
-});
 
 export default Input;

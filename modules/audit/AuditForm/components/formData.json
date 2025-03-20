@@ -1,0 +1,289 @@
+{
+  "formData": [
+    {
+      "step": 1,
+      "title": "General Info",
+      "fields": [
+        {
+          "label": "Registration Number",
+          "key": "registration_number",
+          "type": "TEXT"
+        },
+        { "label": "Chassis Number", "key": "chassis_number", "type": "TEXT" },
+        { "label": "Make & Model", "key": "make_model", "type": "TEXT" },
+        { "label": "Customer Name", "key": "customer_name", "type": "TEXT" },
+        { "label": "Tranche ID", "key": "tranche_id", "type": "TEXT" },
+        {
+          "label": "Location of Audit",
+          "key": "location_of_audit",
+          "type": "RADIO",
+          "options": [
+            "Fleet Operator Hub",
+            "E-Commerce Hub",
+            "Driver Home",
+            "On-Road",
+            "Other"
+          ]
+        },
+        {
+          "label": "Current Location",
+          "key": "current_location",
+          "type": "TEXT"
+        },
+        { "label": "Driver Name", "key": "driver_name", "type": "TEXT" },
+        { "label": "Date & Time", "key": "date_time", "type": "TEXT" }
+      ]
+    },
+    {
+      "step": 2,
+      "title": "Safety & Functionality Inspection",
+      "fields": [
+        {
+          "label": "Display",
+          "key": "display",
+          "type": "RADIO",
+          "options": ["Pass", "Damaged", "Missing"]
+        },
+        {
+          "label": "Dashboard",
+          "key": "dashboard",
+          "type": "RADIO",
+          "options": ["Pass", "Minorly Damaged", "Majorly Damaged"]
+        },
+        {
+          "label": "Headlight",
+          "key": "headlight",
+          "type": "RADIO",
+          "options": ["Pass", "Fail"]
+        },
+        {
+          "label": "Horn",
+          "key": "horn",
+          "type": "RADIO",
+          "options": ["Pass", "Fail"]
+        },
+        {
+          "label": "Seat",
+          "key": "seat",
+          "type": "RADIO",
+          "options": ["Pass", "Minorly Damaged", "Majorly Damaged"]
+        },
+        {
+          "label": "Vehicle Charging",
+          "key": "vehicle_charging",
+          "type": "RADIO",
+          "options": ["Pass", "Fail"]
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "title": "Performance Inspection",
+      "fields": [
+        {
+          "label": "Ignition",
+          "key": "ignition",
+          "type": "RADIO",
+          "options": ["Pass", "Had Minor Issues", "Fail"]
+        },
+        {
+          "label": "Throttle",
+          "key": "throttle",
+          "type": "RADIO",
+          "options": ["Pass", "Had Minor Issues", "Fail"]
+        },
+        {
+          "label": "Motor",
+          "key": "motor",
+          "type": "RADIO",
+          "options": ["Pass", "Was Damaged", "Fail"]
+        },
+        {
+          "label": "Gear Functionality",
+          "key": "gear_functionality",
+          "type": "RADIO",
+          "options": ["Pass", "Fail"]
+        },
+        {
+          "label": "Suspension",
+          "key": "suspension",
+          "type": "RADIO",
+          "options": ["Pass", "Had Minor Issues", "Fail"]
+        },
+        {
+          "label": "Pick-up",
+          "key": "pick_up",
+          "type": "RADIO",
+          "options": ["Pass", "Had Minor Issues", "Fail"]
+        },
+        {
+          "label": "Brake Wire",
+          "key": "brake_wire",
+          "type": "RADIO",
+          "options": ["Pass", "Had Minor Issues", "Fail"]
+        },
+        {
+          "label": "Front Tyre Condition",
+          "key": "front_tyre_condition",
+          "type": "RADIO",
+          "options": ["Pass", "Fail"]
+        },
+        {
+          "label": "Back Tyre Condition",
+          "key": "back_tyre_condition",
+          "type": "RADIO",
+          "options": ["Pass", "Fail"]
+        },
+        {
+          "label": "Tyre Pressure",
+          "key": "tyre_pressure",
+          "type": "RADIO",
+          "options": ["Pass", "Fail"]
+        }
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Physical Audit",
+      "fields": [
+        {
+          "label": "ToolBox",
+          "key": "toolbox",
+          "type": "RADIO",
+          "options": ["Okay", "Damaged", "Not Available"]
+        },
+        {
+          "label": "Right Side Body",
+          "key": "right_side_body",
+          "type": "IMAGE",
+          "quantity": "multiple"
+        },
+        {
+          "label": "Left Side Body",
+          "key": "left_side_body",
+          "type": "IMAGE",
+          "quantity": "multiple"
+        },
+        {
+          "label": "Front Tyre (BrakeWire Side View)",
+          "key": "front_tyre_side_view",
+          "type": "IMAGE"
+        },
+        {
+          "label": "Fr. Number plate",
+          "key": "front_number_plate",
+          "type": "RADIO",
+          "options": ["Okay", "Damaged", "Faded"]
+        },
+        {
+          "label": "Right Indicator",
+          "key": "right_indicator",
+          "type": "RADIO",
+          "options": ["Cracked", "Damaged", "Okay"]
+        },
+        {
+          "label": "Left Indicator",
+          "key": "left_indicator",
+          "type": "RADIO",
+          "options": ["Cracked", "Damaged", "Okay"]
+        },
+        {
+          "label": "Rear number plate",
+          "key": "rear_number_plate",
+          "type": "RADIO",
+          "options": ["Okay", "Damaged", "Faded"]
+        },
+        {
+          "label": "Rear Mudguard",
+          "key": "rear_mudguard",
+          "type": "RADIO",
+          "options": ["Cracked", "Damaged", "Okay"]
+        },
+        {
+          "label": "Front Mudguard",
+          "key": "front_mudguard",
+          "type": "RADIO",
+          "options": ["Rusted", "Damaged"]
+        },
+        {
+          "label": "Right ORVM",
+          "key": "right_orvm",
+          "type": "RADIO",
+          "options": ["Pass", "Damaged", "Fail"]
+        },
+        {
+          "label": "Left ORVM",
+          "key": "left_orvm",
+          "type": "RADIO",
+          "options": ["Pass", "Damaged", "Fail"]
+        },
+        { "label": "Back Photo", "key": "back_photo", "type": "IMAGE" },
+        {
+          "label": "Battery Box Open Photo",
+          "key": "battery_box_open_photo",
+          "type": "IMAGE"
+        },
+        {
+          "label": "Battery Qty",
+          "key": "battery_qty",
+          "type": "RADIO",
+          "options": ["0", "1", "2"]
+        },
+        {
+          "label": "Right Tail Light",
+          "key": "right_tail_light",
+          "type": "RADIO",
+          "options": ["Cracked", "Damaged", "Okay"]
+        },
+        {
+          "label": "Left Tail Light",
+          "key": "left_tail_light",
+          "type": "RADIO",
+          "options": ["Cracked", "Damaged", "Okay"]
+        },
+        {
+          "label": "Battery Box Lock",
+          "key": "battery_box_lock",
+          "type": "RADIO",
+          "options": ["Pass", "Fail"]
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "title": "Accessories & Documents",
+      "fields": [
+        {
+          "label": "Keys Available",
+          "key": "keys_available",
+          "type": "RADIO",
+          "options": ["0", "1", "2"]
+        },
+        {
+          "label": "Insurance Copy",
+          "key": "insurance_copy",
+          "type": "RADIO",
+          "options": ["Pass", "Fail"]
+        },
+        {
+          "label": "RC Copy",
+          "key": "rc_copy",
+          "type": "RADIO",
+          "options": ["Pass", "Fail"]
+        }
+      ]
+    },
+    {
+      "step": 6,
+      "title": "360 Video",
+      "fields": [
+        {
+          "label": "360 Video",
+          "key": "video_360",
+          "type": "VIDEO",
+          "limit": "2 mins"
+        }
+      ]
+    }
+  ]
+}
