@@ -10,16 +10,7 @@ interface StepConfig {
   icon?: string; // Optional icon for future use
 }
 
-const stepConfig: StepConfig[] = [
-  { id: "a7x9d2", label: "General Info", number: 1 },
-  { id: "b3k5m8", label: "Safety & Functionality", number: 2 },
-  { id: "c4n6p1", label: "Performance", number: 3 },
-  { id: "d8r2t5", label: "Physical Audit", number: 4 },
-  { id: "e9w4y7", label: "Accessories & Documents", number: 5 },
-  { id: "f1h3j6", label: "360 Video", number: 6 },
-];
-
-const Stepper = () => {
+const Stepper = ({ stepConfig }: { stepConfig: StepConfig[] }) => {
   const currentStep = useAppSelector((state) => state.audit.currentStep);
   const dispatch = useAppDispatch();
 

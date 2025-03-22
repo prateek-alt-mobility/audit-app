@@ -98,11 +98,11 @@ const AuditDashboard = () => {
 
             <VehicleOption
               title="2 Wheeler"
-              onPress={() => handleVehicleSelect("2-wheeler")}
+              onPress={() => handleVehicleSelect("2W")}
             />
             <VehicleOption
               title="3 Wheeler"
-              onPress={() => handleVehicleSelect("3-wheeler")}
+              onPress={() => handleVehicleSelect("3W")}
             />
           </View>
         </View>

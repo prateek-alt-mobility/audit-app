@@ -12,6 +12,7 @@ interface RadioButtonProps {
   direction?: "row" | "column";
   title?: string;
   disabled?: boolean;
+  error?: string;
 }
 
 const RadioButton: React.FC<RadioButtonProps> = ({
@@ -21,10 +22,13 @@ const RadioButton: React.FC<RadioButtonProps> = ({
   title,
   direction = "row",
   disabled = false,
+  error,
 }) => {
   return (
-    <View>
-      {title && <Text className="text-base mb-2">{title}</Text>}
+    <View className="mb-8">
+      {title && (
+        <Text className="text-base font-medium mb-2 text-black">{title}</Text>
+      )}
       <View
         className={`flex-row items-center gap-4 ${
           direction === "column" ? "flex-col" : ""
@@ -57,6 +61,7 @@ const RadioButton: React.FC<RadioButtonProps> = ({
           );
         })}
       </View>
+      {error && <Text className="text-red-500 mt-1 text-sm">{error}</Text>}
     </View>
   );
 };

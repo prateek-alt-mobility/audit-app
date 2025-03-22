@@ -9,6 +9,7 @@ interface InputProps {
   disabled?: boolean;
   multiline?: boolean;
   numberOfLines?: number;
+  error?: string;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -19,12 +20,15 @@ const Input: React.FC<InputProps> = ({
   disabled = false,
   multiline = false,
   numberOfLines = 4,
+  error,
 }) => {
   return (
-    <View className="mb-4">
+    <View className="mb-8">
       <Text className="text-base font-medium mb-2 text-black">{label}</Text>
       <TextInput
-        className={`w-full p-3 rounded-lg border border-gray-200 bg-white
+        className={`w-full p-3 rounded-lg border ${
+          error ? "border-red-500" : "border-gray-200"
+        } bg-white
           ${
             disabled
               ? "bg-gray-100 text-gray-400 border-gray-200 opacity-70"
@@ -42,6 +46,7 @@ const Input: React.FC<InputProps> = ({
         focusable={!disabled}
         pointerEvents={disabled ? "none" : "auto"}
       />
+      {error && <Text className="text-red-500 mt-1 text-sm">{error}</Text>}
     </View>
   );
 };
