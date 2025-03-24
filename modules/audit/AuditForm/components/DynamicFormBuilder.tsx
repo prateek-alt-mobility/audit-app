@@ -1,4 +1,5 @@
 import Dropdown from "@/components/Dropdown";
+import ImageInput from "@/components/ImageInput";
 import ImageUpload from "@/components/ImageUpload";
 import Input from "@/components/Input";
 import RadioButton from "@/components/RadioButton";
@@ -20,13 +21,15 @@ interface DynamicFormBuilderProps {
   vehicleType: string;
 }
 const failureStates = [
-  "Damaged",
-  "Missing",
-  "Fail",
-  "damage",
-  "Cracked",
-  "Rusted",
-  "Dent",
+  "DAMAGED",
+  "MISSING",
+  "FAIL",
+  "DAMAGE",
+  "CRACKED",
+  "RUSTED",
+  "DENT",
+  "MINOR_DAMAGE",
+  "MAJOR_DAMAGE",
 ];
 // Create a dynamic Zod schema based on the form fields
 const createDynamicSchema = (fields: any[]) => {
@@ -130,10 +133,7 @@ const DynamicFormBuilder: React.FC<DynamicFormBuilderProps> = ({
               <View>
                 <RadioButton
                   title={field.label}
-                  options={field.options.map((option: string) => ({
-                    label: option,
-                    value: option,
-                  }))}
+                  options={field.options}
                   selectedValue={value}
                   onSelect={onChange}
                   error={errors[field.key]?.message as string}
@@ -145,10 +145,20 @@ const DynamicFormBuilder: React.FC<DynamicFormBuilderProps> = ({
                     render={({
                       field: { onChange: onImageChange, value: images },
                     }) => (
-                      <ImageUpload
+                      // <ImageUpload
+                      //   label={`${field.label} Images`}
+                      //   value={images}
+                      //   onChange={onImageChange}
+                      //   error={errors[`${field.key}_images`]?.message as string}
+                      //   multiple={true}
+                      // />
+                      <ImageInput
                         label={`${field.label} Images`}
                         value={images}
-                        onChange={onImageChange}
+                        onChange={(newImages) => {
+                          console.log("Selected images:", newImages);
+                          onImageChange(newImages);
+                        }}
                         error={errors[`${field.key}_images`]?.message as string}
                         multiple={true}
                       />
