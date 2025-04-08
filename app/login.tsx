@@ -3,12 +3,12 @@ import { Feather } from "@expo/vector-icons";
 import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    ActivityIndicator,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 import { useLoginMutation } from "../store/services/api";
 
@@ -87,8 +87,11 @@ export default function Login() {
           />
 
           <View className="flex-1 justify-center">
-            <Text className="text-3xl font-bold mb-8 text-center">
-              Welcome Back
+            <Text className="text-3xl font-bold mb-2 text-center">
+              My Fleet
+            </Text>
+            <Text className="text-xl mb-8 text-center text-gray-600">
+              Beta v0.0.1
             </Text>
 
             <View className="space-y-4">

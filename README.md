@@ -1,50 +1,65 @@
-# Welcome to your Expo app 👋
+# My Fleet - Fleet Management Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Beta v0.0.1
 
-## Get started
+## Description
+My Fleet is a fleet management application for vehicles, featuring audit capabilities and battery diagnostics.
 
-1. Install dependencies
+## Features
+- Vehicle auditing
+- Battery diagnostics and testing
+- User authentication
+- Mobile-friendly UI
 
-   ```bash
-   npm install
+## Setup Instructions
+
+### Prerequisites
+- Node.js (v14 or later)
+- Yarn or npm
+- Expo CLI (`npm install -g expo-cli`)
+- EAS CLI (`npm install -g eas-cli`)
+- Android Studio (for Android development)
+
+### Installation
+1. Clone the repository
+2. Install dependencies:
+   ```
+   yarn install
    ```
 
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+### Running the Development Server
+```
+yarn start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+To run on Android emulator:
+```
+yarn android
+```
 
-## Learn more
+## Building for Android
 
-To learn more about developing your project with Expo, look at the following resources:
+### Development Build (APK)
+```
+yarn build:android-dev
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Preview Build (APK)
+```
+yarn build:android
+```
 
-## Join the community
+### Production Build (AAB for Google Play)
+```
+yarn build:android-prod
+```
 
-Join our community of developers creating universal apps.
+## Configuration
+The app is configured in:
+- `app.json` - Expo configuration
+- `eas.json` - EAS Build configuration
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Branding
+- App Name: My Fleet
+- Version: Beta v0.0.1
+- Logo: Located at `assets/images/splash-icon.png`
