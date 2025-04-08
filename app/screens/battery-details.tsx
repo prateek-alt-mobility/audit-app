@@ -3,8 +3,10 @@ import { Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, ImageSourcePropType, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 import BatteryPlaceholderImage from "../../assets/images/battery_placeholder.png";
-import { useGetBatteryTestsQuery } from '../../store/services/batteryDiagnosticApi';
+import { RootState } from '../../store';
+import { useGetBatteryTestsQuery, useGetDeviceCommandDetailQuery } from '../../store/services/batteryDiagnosticApi';
 
 type TestType = 'Manual' | 'Automatic';
 type TestStatus = 'pending' | 'approved' | 'rejected';
@@ -28,6 +30,7 @@ interface TestTimerMap {
 }
 
 const BatteryDetails = () => {
+  const { serialNumber, batteryData } = useSelector((state: RootState) => state.battery);
   const [isBatteryOn, setIsBatteryOn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isTestsStarted, setIsTestsStarted] = useState(false);
@@ -46,11 +49,48 @@ const BatteryDetails = () => {
     refetch: refetchTests
   } = useGetBatteryTestsQuery();
 
-  const batteryDetails = {
-    batteryNumber: "BAT001",
-    charge: "85%",
-    discharge: "0.2kW/h",
-    status: "Active"
+  // Use a hardcoded serial number if none is provided, for testing purposes
+  const effectiveSerialNumber = serialNumber || "BAT12345";
+  
+  const {
+    data: deviceCommandDetail,
+    isLoading: isLoadingDeviceCommand,
+    error: deviceCommandError
+  } = useGetDeviceCommandDetailQuery(effectiveSerialNumber)
+
+  // Log the API response when it's received
+  useEffect(() => {
+    console.log("Serial Number being used:", effectiveSerialNumber);
+    if (deviceCommandDetail) {
+      console.log("deviceCommandDetail", deviceCommandDetail);
+      setIsBatteryOn(deviceCommandDetail.is_start);
+    }
+    
+    if (deviceCommandError) {
+      console.error("Device command error:", deviceCommandError);
+    }
+  }, [deviceCommandDetail, deviceCommandError, effectiveSerialNumber]);
+
+  // Get battery details from API and state
+  const getBatteryDetails = () => {
+    // Use optional chaining to safely access properties
+    
+    return {
+      batteryNumber: batteryData.serialNumber || serialNumber || "N/A",
+      charge: deviceCommandDetail?.charge_ah?.count !== undefined 
+        ? `${deviceCommandDetail.charge_ah.count}Ah` : "N/A",
+      discharge: deviceCommandDetail?.discharge_ah?.count !== undefined 
+        ? `${deviceCommandDetail.discharge_ah.count}Ah` : "N/A",
+      status: isBatteryOn ? "Active" : "Inactive",
+      plantCode: batteryData.plantCode || "N/A",
+      modelNo: batteryData.modelNo || "N/A",
+      date: batteryData.date || "N/A",
+      bmsModelNo: batteryData.bmsModelNo || "N/A",
+      bmsNumber: batteryData.bmsNumber || "N/A",
+      softwareVersion: batteryData.softwareVersion || "N/A",
+      leaseDays: deviceCommandDetail?.lease_days?.count !== undefined 
+        ? `${deviceCommandDetail.lease_days.count} days` : "N/A"
+    };
   };
 
   const toggleBattery = async () => {
@@ -263,29 +303,63 @@ const BatteryDetails = () => {
             {/* Right side - Battery Details */}
             <View className="w-2/3 pl-4">
               <Text className="text-gray-900 text-lg font-semibold mb-2">
-                Battery {batteryDetails.batteryNumber}
+                Battery {getBatteryDetails().batteryNumber}
               </Text>
               <Text className="text-gray-600 mb-1">
-                Charge: {batteryDetails.charge}
+                Model: {getBatteryDetails().modelNo}
               </Text>
               <Text className="text-gray-600 mb-1">
-                Discharge Rate: {batteryDetails.discharge}
+                Charge: {getBatteryDetails().charge}
               </Text>
-              <Text className="text-gray-600 mb-3">
-                Status: {batteryDetails.status}
+              <Text className="text-gray-600 mb-1">
+                Discharge: {getBatteryDetails().discharge}
+              </Text>
+              <Text className="text-gray-600 mb-1">
+                Status: {getBatteryDetails().status}
               </Text>
               
               <TouchableOpacity
                 onPress={toggleBattery}
-                disabled={isLoading}
-                className={`py-2 px-4 rounded-lg ${
+                disabled={isLoading || isLoadingDeviceCommand}
+                className={`py-2 px-4 rounded-lg mt-2 ${
                   isBatteryOn ? 'bg-red-500' : 'bg-green-500'
-                } ${isLoading ? 'opacity-50' : ''}`}
+                } ${(isLoading || isLoadingDeviceCommand) ? 'opacity-50' : ''}`}
               >
                 <Text className="text-white text-center font-medium">
-                  {isBatteryOn ? 'Switch Off' : 'Switch On'}
+                  {isLoadingDeviceCommand ? 'Loading...' : isBatteryOn ? 'Switch Off' : 'Switch On'}
                 </Text>
               </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Additional Battery Details */}
+          <View className="mt-4 pt-4 border-t border-gray-100">
+            <Text className="text-gray-700 font-medium mb-2">Additional Information</Text>
+            <View className="flex-row flex-wrap">
+              <View className="w-1/2 mb-2">
+                <Text className="text-gray-500 text-xs">Plant Code</Text>
+                <Text className="text-gray-700">{getBatteryDetails().plantCode}</Text>
+              </View>
+              <View className="w-1/2 mb-2">
+                <Text className="text-gray-500 text-xs">Manufacturing Date</Text>
+                <Text className="text-gray-700">{getBatteryDetails().date}</Text>
+              </View>
+              <View className="w-1/2 mb-2">
+                <Text className="text-gray-500 text-xs">BMS Model</Text>
+                <Text className="text-gray-700">{getBatteryDetails().bmsModelNo}</Text>
+              </View>
+              <View className="w-1/2 mb-2">
+                <Text className="text-gray-500 text-xs">BMS Number</Text>
+                <Text className="text-gray-700">{getBatteryDetails().bmsNumber}</Text>
+              </View>
+              <View className="w-1/2 mb-2">
+                <Text className="text-gray-500 text-xs">Software Version</Text>
+                <Text className="text-gray-700">{getBatteryDetails().softwareVersion}</Text>
+              </View>
+              <View className="w-1/2 mb-2">
+                <Text className="text-gray-500 text-xs">Lease Days</Text>
+                <Text className="text-gray-700">{getBatteryDetails().leaseDays}</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -300,8 +374,32 @@ const BatteryDetails = () => {
           </View>
         )}
 
+        {/* Loading Device Command Indicator */}
+        {isLoadingDeviceCommand && (
+          <View className="mt-4 items-center">
+            <ActivityIndicator size="large" color="#22c55e" />
+            <Text className="text-gray-500 mt-2">
+              Loading battery information...
+            </Text>
+          </View>
+        )}
+
+        {/* Device Command Error */}
+        {deviceCommandError && (
+          <View className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+            <View className="flex-row items-center">
+              <View className="w-8 h-8 rounded-full bg-red-500 items-center justify-center mr-3">
+                <Text className="text-white text-lg">!</Text>
+              </View>
+              <Text className="text-red-600 flex-1">
+                Failed to load battery information. Please try again.
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Alert Messages */}
-        {!isLoading && (
+        {!isLoading && !isLoadingDeviceCommand && (
           <>
             {/* Negative Alert - Battery Off */}
             {!isBatteryOn && (

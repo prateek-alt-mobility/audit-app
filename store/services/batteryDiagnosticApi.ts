@@ -1,4 +1,5 @@
 import { api } from './api';
+import { CommandDetailData, CommandDetailResponse } from './interfaces/batteryDeviceCommand.interface';
 import { ApprovalRequest, ApprovalResponse } from './interfaces/batteryTestApproval.interface';
 import { TestResultsResponse } from './interfaces/batteryTestResults.interface';
 import { Approval, RunTestRequest, TestRun, TestRunResponse } from './interfaces/batteryTestRun.interface';
@@ -80,6 +81,16 @@ export const batteryDiagnosticApi = api.injectEndpoints({
       // Transform the response to extract the data
       transformResponse: (response: ApprovalResponse) => response.data,
     }),
+
+    // Get device command details by ID
+    getDeviceCommandDetail: builder.query<CommandDetailData, string>({
+      query: (commandId) => ({
+        url: `/battery/device/command-detail/${commandId}`,
+        method: 'GET',
+      }),
+      // Transform the response to extract the data
+      transformResponse: (response: CommandDetailResponse) => response.data,
+    }),
   }),
 });
 
@@ -90,4 +101,5 @@ export const {
   useGetBatteryTestRunByIdQuery,
   useGetAllTestResultsQuery,
   useApproveTestMutation,
+  useGetDeviceCommandDetailQuery,
 } = batteryDiagnosticApi; 
