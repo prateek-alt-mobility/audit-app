@@ -1,9 +1,9 @@
 import { api } from './api';
 import { StartDeviceResponse } from './interfaces/batteryDevice.interface';
 import { CommandDetailData, CommandDetailResponse } from './interfaces/batteryDeviceCommand.interface';
-import { ApprovalRequest, ApprovalResponse } from './interfaces/batteryTestApproval.interface';
+import { ApprovalRequest } from './interfaces/batteryTestApproval.interface';
 import { TestResultsResponse } from './interfaces/batteryTestResults.interface';
-import { Approval, RunTestRequest, SimpleSuccessResponse, TestResultIdData, TestResultIdResponse, TestRun } from './interfaces/batteryTestRun.interface';
+import { RunTestRequest, SimpleSuccessResponse, TestResultIdData, TestResultIdResponse, TestRun } from './interfaces/batteryTestRun.interface';
 import { BatteryTest, BatteryTestsResponse } from './interfaces/batteryTests.interface';
 
 /**
@@ -72,14 +72,13 @@ export const batteryDiagnosticApi = api.injectEndpoints({
     }),
 
     // Approve or reject a test
-    approveTest: builder.mutation<Approval, ApprovalRequest>({
+    approveTest: builder.mutation<SimpleSuccessResponse, ApprovalRequest>({
       query: (requestData) => ({
         url: '/battery/battery-diagnostic-tool/test/approve',
         method: 'POST',
         body: requestData,
       }),
-      // Transform the response to extract the data
-      transformResponse: (response: ApprovalResponse) => response.data,
+      // No need to transform the response as we want to return the entire object
     }),
 
     // Start a battery device by ID

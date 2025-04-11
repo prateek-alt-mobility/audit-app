@@ -15,6 +15,8 @@ interface TestsListProps {
   onStartTest?: (testId: string, testType: TestType) => void;
   onReadyTest?: (testId: string, testType: TestType) => void;
   getTestResultId?: (testId: string) => Promise<TestResultIdData | null>;
+  onApproveTest?: (testId: string, resultId: string) => void;
+  onRejectTest?: (testId: string, resultId: string) => void;
 }
 
 const TestsList: React.FC<TestsListProps> = ({
@@ -25,7 +27,9 @@ const TestsList: React.FC<TestsListProps> = ({
   refetchTests,
   onStartTest,
   onReadyTest,
-  getTestResultId
+  getTestResultId,
+  onApproveTest,
+  onRejectTest
 }) => {
   // Get test result IDs from Redux
   const { testResultIds } = useSelector((state: RootState) => state.battery);
@@ -94,6 +98,8 @@ const TestsList: React.FC<TestsListProps> = ({
             onReadyTest={onReadyTest}
             getTestResultId={getTestResultId}
             refetchTests={refetchTests}
+            onApproveTest={onApproveTest}
+            onRejectTest={onRejectTest}
           />
         ))}
       </ScrollView>

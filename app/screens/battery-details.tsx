@@ -6,17 +6,20 @@ import { useDispatch, useSelector } from 'react-redux';
 import { BatteryDetailsType, BatteryInfo, StatusAlerts, TestStatistics, TestsList } from '../../components/batteryDiagnostics';
 import { RootState } from '../../store';
 import {
+  useApproveTestMutation,
   useGetBatteryTestsQuery,
   useGetDeviceCommandDetailQuery,
   useGetTestResultIdMutation,
   useRunBatteryTestMutation,
-  useStartBatteryMutation
+  useStartBatteryMutation,
 } from '../../store/services/batteryDiagnosticApi';
+import { ApprovalStatus } from '../../store/services/interfaces/batteryEnums';
 import { TestStatus } from '../../store/services/interfaces/batteryTests.interface';
 import { setTestResultId } from '../../store/slices/batterySlice';
 
 const BatteryDetails = () => {
   const { serialNumber, batteryData } = useSelector((state: RootState) => state.battery);
+  const { user } = useSelector((state: RootState) => state.auth);
   const [isBatteryOn, setIsBatteryOn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isTestsStarted, setIsTestsStarted] = useState(false);
@@ -56,6 +59,9 @@ const BatteryDetails = () => {
 
   // Add getTestResultId mutation
   const [getTestResultId, { isLoading: isLoadingTestResult }] = useGetTestResultIdMutation();
+  
+  // Add approveTest mutation
+  const [approveTest, { isLoading: isApprovingTest }] = useApproveTestMutation();
 
   const dispatch = useDispatch();
 
@@ -273,6 +279,56 @@ const BatteryDetails = () => {
     
     console.log("Test ready with ID:", testId, "and type:", testType);
   };
+  
+  // Handle approving a manual test
+  const handleApproveTest = async (testId: string, resultId: string) => {
+    try {
+      console.log(`Approving manual test with ID: ${testId}, result ID: ${resultId}`);
+      
+      // Get user email from auth state
+      const userEmail = user?.email || 'unknown-user@example.com';
+      
+      // Call API to approve the test
+      const payload = {
+        result_id: resultId,
+        approved_by: userEmail,
+        status: ApprovalStatus.Approved
+      };
+
+      await approveTest(payload).unwrap();
+      console.log(`Test ${testId} successfully approved`);
+      
+      // Refetch tests to update UI
+      await refetchTests();
+    } catch (error) {
+      console.error(`Error approving test ${testId}:`, error);
+    }
+  };
+  
+  // Handle rejecting a manual test
+  const handleRejectTest = async (testId: string, resultId: string) => {
+    try {
+      console.log(`Rejecting manual test with ID: ${testId}, result ID: ${resultId}`);
+      
+      // Get user email from auth state
+      const userEmail = user?.email || 'unknown-user@example.com';
+      
+      // Call API to reject the test
+      const payload = {
+        result_id: resultId,
+        approved_by: userEmail,
+        status: ApprovalStatus.Rejected
+      };
+      
+      await approveTest(payload).unwrap();
+      console.log(`Test ${testId} marked as rejected`);
+      
+      // Refetch tests to update UI
+      await refetchTests();
+    } catch (error) {
+      console.error(`Error rejecting test ${testId}:`, error);
+    }
+  };
 
   // Wrapper for getTestResultId that can be passed to TestItem components
   const fetchTestResultId = async (testId: string) => {
@@ -400,6 +456,8 @@ const BatteryDetails = () => {
               onStartTest={handleStartTest}
               onReadyTest={handleReadyTest}
               getTestResultId={fetchTestResultId}
+              onApproveTest={handleApproveTest}
+              onRejectTest={handleRejectTest}
             />
           </View>
         )}

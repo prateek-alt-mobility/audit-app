@@ -17,9 +17,12 @@ export interface TestItemProps {
   onReadyTest?: (testId: string, testType: TestType) => void;
   getTestResultId?: (testId: string) => Promise<TestResultIdData | null>;
   refetchTests?: () => Promise<any>;
+  onApproveTest?: (testId: string, resultId: string) => void;
+  onRejectTest?: (testId: string, resultId: string) => void;
 }
 
 const POLLING_INTERVAL = 5000; // 5 seconds
+const MANUAL_TEST_DURATION = 60; // 1 minute in seconds
 
 const TestItem: React.FC<TestItemProps> = ({
   testId,
@@ -31,11 +34,23 @@ const TestItem: React.FC<TestItemProps> = ({
   onStartTest,
   onReadyTest,
   getTestResultId,
-  refetchTests
+  refetchTests,
+  onApproveTest,
+  onRejectTest
 }) => {
   const [polling, setPolling] = useState(false);
   const [pollingSuccess, setPollingSuccess] = useState(false);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Manual test timer states
+  const [manualTestActive, setManualTestActive] = useState(false);
+  const [manualTestCompleted, setManualTestCompleted] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(MANUAL_TEST_DURATION);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // New loading states for approve/reject buttons
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [rejectLoading, setRejectLoading] = useState(false);
 
   // ===== Polling Logic =====
   
@@ -58,6 +73,7 @@ const TestItem: React.FC<TestItemProps> = ({
   useEffect(() => {
     return () => {
       stopPolling();
+      stopManualTestTimer();
     };
   }, []);
 
@@ -115,6 +131,77 @@ const TestItem: React.FC<TestItemProps> = ({
         console.error(`Error polling for test ${testId} results:`, error);
       }
     }, POLLING_INTERVAL);
+  };
+
+  // ===== Manual Test Timer Logic =====
+  
+  const startManualTestTimer = () => {
+    setManualTestActive(true);
+    setManualTestCompleted(false);
+    setRemainingTime(MANUAL_TEST_DURATION);
+    
+    timerIntervalRef.current = setInterval(() => {
+      setRemainingTime(prevTime => {
+        const newTime = prevTime - 1;
+        if (newTime <= 0) {
+          stopManualTestTimer();
+          setManualTestCompleted(true);
+          return 0;
+        }
+        return newTime;
+      });
+    }, 1000);
+  };
+  
+  const stopManualTestTimer = () => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+  };
+  
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  const handleApprove = async () => {
+    if (onApproveTest && testResultId) {
+      try {
+        setApproveLoading(true);
+        await onApproveTest(testId, testResultId);
+      } catch (error) {
+        console.error(`Error approving test ${testId}:`, error);
+      } finally {
+        setApproveLoading(false);
+      }
+    } else if (onApproveTest) {
+      console.error(`Cannot approve test ${testId}: No test result ID available`);
+    }
+    resetManualTestState();
+  };
+  
+  const handleReject = async () => {
+    if (onRejectTest && testResultId) {
+      try {
+        setRejectLoading(true);
+        await onRejectTest(testId, testResultId);
+      } catch (error) {
+        console.error(`Error rejecting test ${testId}:`, error);
+      } finally {
+        setRejectLoading(false);
+      }
+    } else if (onRejectTest) {
+      console.error(`Cannot reject test ${testId}: No test result ID available`);
+    }
+    resetManualTestState();
+  };
+  
+  const resetManualTestState = () => {
+    setManualTestActive(false);
+    setManualTestCompleted(false);
+    setRemainingTime(MANUAL_TEST_DURATION);
   };
 
   // ===== UI Helper Functions =====
@@ -187,7 +274,7 @@ const TestItem: React.FC<TestItemProps> = ({
         </View>
         
         {/* Add pill for pending status indicating test can be started */}
-        {status === TestStatus.Pending && (
+        {status === TestStatus.Pending && !manualTestActive && (
           <View className="self-start rounded-full px-3 py-1 mt-1 bg-blue-100 border border-blue-500">
             <Text className="text-sm font-medium text-blue-600">This test can be started now</Text>
           </View>
@@ -199,6 +286,7 @@ const TestItem: React.FC<TestItemProps> = ({
   // ===== Button Handlers and UI =====
 
   const isAutomaticPendingTest = testType === 'Automatic' && status === TestStatus.Pending && testResultId;
+  const isManualPendingTest = testType === 'Manual' && status === TestStatus.Pending;
   
   const handleButtonPress = () => {
     // Special handling for Automatic tests with Pending status and testResultId
@@ -208,11 +296,30 @@ const TestItem: React.FC<TestItemProps> = ({
       return;
     }
     
+    // Special handling for Manual tests with Pending status
+    if (isManualPendingTest && !manualTestActive) {
+      console.log('Starting manual test timer for test ID:', testId);
+      
+      // First call onStartTest to initiate the test
+      if (onStartTest) {
+        console.log('Starting test with ID:', testId, 'and type:', testType);
+        onStartTest(testId, testType);
+      }
+      
+      // Then start the timer
+      startManualTestTimer();
+      return;
+    }
+    
     if (status === TestStatus.Success || status === TestStatus.Failed) {
       // For Success or Failed status, rerun the test by calling onReadyTest
       if (onReadyTest) {
         console.log('Rerunning test with ID:', testId, 'and type:', testType);
         onReadyTest(testId, testType);
+        // Reset manual test state if it was a manual test
+        if (testType === 'Manual') {
+          resetManualTestState();
+        }
       } else {
         console.log('Ready test function not provided for test ID:', testId);
       }
@@ -224,8 +331,8 @@ const TestItem: React.FC<TestItemProps> = ({
       } else {
         console.log('Ready test function not provided for test ID:', testId);
       }
-    } else if (status === TestStatus.Pending) {
-      // For Pending tests with Manual type or no testResultId, call onStartTest
+    } else if (status === TestStatus.Pending && !isAutomaticPendingTest && !isManualPendingTest) {
+      // For other Pending tests, just call onStartTest
       if (onStartTest) {
         console.log('Starting test with ID:', testId, 'and type:', testType);
         onStartTest(testId, testType);
@@ -241,6 +348,8 @@ const TestItem: React.FC<TestItemProps> = ({
   const getButtonText = () => {
     if (isAutomaticPendingTest) {
       return "Start Automatic Test";
+    } else if (isManualPendingTest && !manualTestActive) {
+      return "Start Manual Test";
     } else if (status === TestStatus.Success || status === TestStatus.Failed) {
       return "Rerun Test";
     } else if (!status || status === TestStatus.NotStarted) {
@@ -263,6 +372,8 @@ const TestItem: React.FC<TestItemProps> = ({
   const getButtonIcon = () => {
     if (isAutomaticPendingTest) {
       return "flash";
+    } else if (isManualPendingTest && !manualTestActive) {
+      return "hand-back-left";
     } else if (status === TestStatus.Success || status === TestStatus.Failed) {
       return "refresh";
     }
@@ -296,6 +407,56 @@ const TestItem: React.FC<TestItemProps> = ({
       {/* Status badges */}
       {getStatusBadge()}
 
+      {/* Manual test timer */}
+      {testType === 'Manual' && manualTestActive && (
+        <View className="mb-4 bg-blue-50 p-3 rounded-md border border-blue-200">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-blue-700 font-medium">
+              {manualTestCompleted 
+                ? "Test duration completed!" 
+                : "You need to run the test for at least 1 minute"}
+            </Text>
+            <View className="bg-blue-100 px-3 py-1 rounded-full">
+              <Text className="text-blue-700 font-bold">{formatTime(remainingTime)}</Text>
+            </View>
+          </View>
+          
+          {manualTestCompleted && (
+            <View className="flex-row justify-center mt-3 space-x-4 gap-x-4">
+              <TouchableOpacity 
+                onPress={handleApprove}
+                disabled={approveLoading || rejectLoading}
+                className={`${approveLoading ? 'bg-green-400' : 'bg-green-600'} rounded-lg px-4 py-2 flex-row items-center`}
+              >
+                {approveLoading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <MaterialCommunityIcons name="check" size={18} color="white" />
+                )}
+                <Text className="text-white font-medium ml-2">
+                  {approveLoading ? "Approving..." : "Approve"}
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={handleReject}
+                disabled={approveLoading || rejectLoading}
+                className={`${rejectLoading ? 'bg-red-400' : 'bg-red-600'} rounded-lg px-4 py-2 flex-row items-center`}
+              >
+                {rejectLoading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <MaterialCommunityIcons name="close" size={18} color="white" />
+                )}
+                <Text className="text-white font-medium ml-2">
+                  {rejectLoading ? "Rejecting..." : "Reject"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      )}
+
       {/* Test description */}
       <View className="mt-2">
         <Text className="text-gray-600 mb-4 text-sm">
@@ -328,30 +489,32 @@ const TestItem: React.FC<TestItemProps> = ({
         </View>
       )}
       
-      {/* Action button */}
-      <View className="flex-row justify-end">
-        <TouchableOpacity 
-          onPress={handleButtonPress}
-          className={`${getButtonColor()} rounded-lg px-4 py-2 flex-row items-center`}
-          disabled={polling} // Disable button during polling
-        >
-          {polling ? (
-            <>
-              <ActivityIndicator size="small" color="white" />
-              <Text className="text-white font-medium ml-2">Testing...</Text>
-            </>
-          ) : (
-            <>
-              <MaterialCommunityIcons 
-                name={getButtonIcon()}
-                size={18} 
-                color="white" 
-              />
-              <Text className="text-white font-medium ml-2">{getButtonText()}</Text>
-            </>
-          )}
-        </TouchableOpacity>
-      </View>
+      {/* Action button - hide for manual tests during active timer */}
+      {(!manualTestActive || testType !== 'Manual') && (
+        <View className="flex-row justify-end">
+          <TouchableOpacity 
+            onPress={handleButtonPress}
+            className={`${getButtonColor()} rounded-lg px-4 py-2 flex-row items-center`}
+            disabled={polling || (testType === 'Manual' && manualTestActive)} // Disable during polling or manual test
+          >
+            {polling ? (
+              <>
+                <ActivityIndicator size="small" color="white" />
+                <Text className="text-white font-medium ml-2">Testing...</Text>
+              </>
+            ) : (
+              <>
+                <MaterialCommunityIcons 
+                  name={getButtonIcon()}
+                  size={18} 
+                  color="white" 
+                />
+                <Text className="text-white font-medium ml-2">{getButtonText()}</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
