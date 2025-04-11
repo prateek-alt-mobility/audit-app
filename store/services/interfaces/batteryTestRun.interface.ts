@@ -17,6 +17,25 @@ export interface TestRunResponse {
   data: TestRun;
 }
 
+export interface SimpleSuccessResponse {
+  statusCode: 200;
+  status: 'success';
+  message: 'Success';
+}
+
+export interface TestResultIdData {
+  test_name: string;
+  status: string;
+  result_id: string;
+}
+
+export interface TestResultIdResponse {
+  statusCode: 200;
+  status: 'success';
+  message: 'Success';
+  data: TestResultIdData;
+}
+
 export interface Approval {
   id: string;
   test_id: string;

@@ -2,22 +2,18 @@ import { Stack } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
-import { AutomaticTestResult, BatteryDetailsType, BatteryInfo, StatusAlerts, TestStatistics, TestStatus, TestsList } from '../../components/batteryDiagnostics';
+import { useDispatch, useSelector } from 'react-redux';
+import { BatteryDetailsType, BatteryInfo, StatusAlerts, TestStatistics, TestsList } from '../../components/batteryDiagnostics';
 import { RootState } from '../../store';
-import { useGetBatteryTestsQuery, useGetDeviceCommandDetailQuery, useStartBatteryMutation } from '../../store/services/batteryDiagnosticApi';
-
-interface TestStatusMap {
-  [key: string]: TestStatus;
-}
-
-interface AutomaticTestResultsMap {
-  [key: string]: AutomaticTestResult;
-}
-
-interface TestTimerMap {
-  [key: string]: number;
-}
+import {
+  useGetBatteryTestsQuery,
+  useGetDeviceCommandDetailQuery,
+  useGetTestResultIdMutation,
+  useRunBatteryTestMutation,
+  useStartBatteryMutation
+} from '../../store/services/batteryDiagnosticApi';
+import { TestStatus } from '../../store/services/interfaces/batteryTests.interface';
+import { setTestResultId } from '../../store/slices/batterySlice';
 
 const BatteryDetails = () => {
   const { serialNumber, batteryData } = useSelector((state: RootState) => state.battery);
@@ -25,12 +21,6 @@ const BatteryDetails = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isTestsStarted, setIsTestsStarted] = useState(false);
   const [isRestartingTests, setIsRestartingTests] = useState(false);
-  const [testStatuses, setTestStatuses] = useState<TestStatusMap>({});
-  const [automaticTestResults, setAutomaticTestResults] = useState<AutomaticTestResultsMap>({});
-  const [expandedResults, setExpandedResults] = useState<string[]>([]);
-  const [runningAutomaticTests, setRunningAutomaticTests] = useState<string[]>([]);
-  const [testTimers, setTestTimers] = useState<TestTimerMap>({});
-  const [timerIntervals, setTimerIntervals] = useState<{[key: string]: ReturnType<typeof setInterval>}>({});
   const [startCommandSent, setStartCommandSent] = useState(false);
   const requestCountRef = useRef(0);
   
@@ -57,6 +47,17 @@ const BatteryDetails = () => {
     // Enable polling every 3 seconds when start command is sent but battery is not yet on
     pollingInterval: startCommandSent && !isBatteryOn ? 3000 : 0,
   });
+
+  // Add runBatteryTest mutation for the Start Test button
+  const [runBatteryTest, { isLoading: isRunningTest }] = useRunBatteryTestMutation();
+
+  // Start Battery mutation
+  const [startBattery, { isLoading: isStartingBattery, error: startBatteryError }] = useStartBatteryMutation();
+
+  // Add getTestResultId mutation
+  const [getTestResultId, { isLoading: isLoadingTestResult }] = useGetTestResultIdMutation();
+
+  const dispatch = useDispatch();
 
   // Add a timer for polling duration
   useEffect(() => {
@@ -101,7 +102,7 @@ const BatteryDetails = () => {
         clearInterval(pollingIntervalRef.current);
       }
     };
-  }, [startCommandSent, isBatteryOn]);
+  }, [startCommandSent, isBatteryOn, pollingTime]);
 
   // Helper function to add logs with timestamps
   const addPollingLog = (message: string) => {
@@ -109,30 +110,6 @@ const BatteryDetails = () => {
     const logMessage = `[${timestamp}] ${message}`;
     setPollingLogs(prev => [logMessage, ...prev].slice(0, 5)); // Keep only the 5 most recent logs
   };
-
-  // Log every time the query is fetched or polled
-  useEffect(() => {
-    requestCountRef.current += 1;
-    const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] Device command details request #${requestCountRef.current}`, {
-      polling: startCommandSent && !isBatteryOn, 
-      serialNumber: effectiveSerialNumber,
-      isPolling: startCommandSent && !isBatteryOn,
-      pollingInterval: startCommandSent && !isBatteryOn ? 3000 : 0
-    });
-    
-    // Add polling attempt log to UI if we're polling
-    if (startCommandSent && !isBatteryOn && requestCountRef.current > 1) {
-      addPollingLog(`Polling battery status (attempt ${requestCountRef.current - 1})...`);
-    }
-    
-    return () => {
-      console.log(`Request #${requestCountRef.current} completed`);
-    };
-  }, [isLoadingDeviceCommand, effectiveSerialNumber, startCommandSent, isBatteryOn]);
-
-  // Start Battery mutation
-  const [startBattery, { isLoading: isStartingBattery, error: startBatteryError }] = useStartBatteryMutation();
 
   // Log the API response when it's received
   useEffect(() => {
@@ -205,133 +182,155 @@ const BatteryDetails = () => {
     }
   };
 
-  const toggleResultExpansion = (testId: string) => {
-    setExpandedResults(prev => 
-      prev.includes(testId) 
-        ? prev.filter(id => id !== testId)
-        : [...prev, testId]
-    );
-  };
-
-  const startTimer = (testId: string) => {
-    setTestTimers(prev => ({ ...prev, [testId]: 0 }));
-    const interval = setInterval(() => {
-      setTestTimers(prev => ({ ...prev, [testId]: (prev[testId] || 0) + 1 }));
-    }, 1000);
-    setTimerIntervals(prev => ({ ...prev, [testId]: interval }));
-  };
-
-  const stopTimer = (testId: string) => {
-    if (timerIntervals[testId]) {
-      clearInterval(timerIntervals[testId]);
-      setTimerIntervals(prev => {
-        const newIntervals = { ...prev };
-        delete newIntervals[testId];
-        return newIntervals;
-      });
+  // Handle starting a test for pending tests
+  const handleReadyTest = async (testId: string, testType: string) => {
+    if (!isBatteryOn) {
+      console.error("Cannot start test: Battery is not powered on");
+      return;
     }
-  };
 
-  // Cleanup timers on unmount
-  useEffect(() => {
-    return () => {
-      Object.values(timerIntervals).forEach(clearInterval);
-    };
-  }, [timerIntervals]);
-
-  const mockAutomaticTest = async (testId: string) => {
-    setRunningAutomaticTests(prev => [...prev, testId]);
-    startTimer(testId);
-    
     try {
-      // Random delay between 3 and 15 seconds
-      const delay = Math.floor(Math.random() * 12000) + 3000;
-      await new Promise(resolve => setTimeout(resolve, delay));
-
-      // Randomly decide success or failure (50-50 chance)
-      const isSuccess = Math.random() >= 0.5;
-      const status = isSuccess ? 'approved' : 'rejected';
-      const timestamp = new Date().toLocaleString();
-      
-      const result: AutomaticTestResult = {
-        status,
-        message: isSuccess 
-          ? "All test parameters are within acceptable ranges. The test completed successfully with no issues detected."
-          : "Test failed due to one or more parameters being outside the acceptable range. Please check the system and try again.",
-        timestamp
+      // Call the runBatteryTest API
+      const payload = {
+        device_id: effectiveSerialNumber,
+        test_id: testId,
       };
-
-      setAutomaticTestResults(prev => ({
-        ...prev,
-        [testId]: result
-      }));
-
-      setTestStatuses(prev => ({
-        ...prev,
-        [testId]: status
-      }));
-
-      // Automatically expand the result when it comes in
-      setExpandedResults(prev => [...prev, testId]);
-    } finally {
-      stopTimer(testId);
-      setTestTimers(prev => {
-        const newTimers = { ...prev };
-        delete newTimers[testId];
-        return newTimers;
-      });
-      setRunningAutomaticTests(prev => prev.filter(id => id !== testId));
+      
+      console.log("Starting test with payload:", payload);
+      
+      const response = await runBatteryTest(payload).unwrap();
+      console.log("Test started successfully:", response);
+      
+      // Check if the response has data that might contain a test result ID
+      // Using type assertion since we know the structure might vary
+      const responseData = response as any;
+      if (responseData && 
+          (responseData.data?.test_result_id || 
+           responseData.test_result_id)) {
+           
+        const resultId = String(responseData.data?.test_result_id || responseData.test_result_id);
+        
+        // Store the test result ID in Redux
+        dispatch(setTestResultId({
+          testId: testId,
+          resultId: resultId
+        }));
+        
+        console.log(`Stored test result ID ${resultId} in Redux for test ${testId} (type: ${testType})`);
+      } else {
+        console.log("No test result ID found in the response");
+        
+        // If no test result ID in response, try to get it separately
+        try {
+          const resultData = await getTestResultId(testId).unwrap();
+          if (resultData && resultData.result_id) {
+            // Store the test result ID in Redux
+            dispatch(setTestResultId({
+              testId: testId,
+              resultId: resultData.result_id
+            }));
+            console.log(`Retrieved and stored test result ID ${resultData.result_id} for test ${testId} (type: ${testType})`);
+          }
+        } catch (error) {
+          console.error("Error getting test result ID after running test:", error);
+        }
+      }
+      
+      // After successful test run, refresh the tests to get updated statuses
+      await refetchTests();
+    } catch (error) {
+      console.error("Error starting test:", error);
     }
   };
 
-  const handleStartTest = (testId: string) => {
-    mockAutomaticTest(testId);
-  };
+  // Handle ready test for not started tests
+  const handleStartTest = async (testId: string, testType: string) => {
+    if (!isBatteryOn) {
+      console.error("Cannot ready test: Battery is not powered on");
+      return;
+    }
 
-  const handleApproveTest = (testId: string) => {
-    setTestStatuses(prev => ({
-      ...prev,
-      [testId]: 'approved'
-    }));
-  };
-
-  const handleRejectTest = (testId: string) => {
-    setTestStatuses(prev => ({
-      ...prev,
-      [testId]: 'rejected'
-    }));
-  };
-
-  const handleResetStatus = (testId: string) => {
-    setTestStatuses(prev => {
-      const newStatuses = { ...prev };
-      delete newStatuses[testId];
-      return newStatuses;
-    });
-  };
-
-  const getTestStatistics = () => {
-    const totalTests = batteryTests?.length || 0;
-    const successfulTests = Object.values(testStatuses).filter(status => status === 'approved').length;
-    const rejectedTests = Object.values(testStatuses).filter(status => status === 'rejected').length;
+    try {
+      // Call the getTestResultId mutation with the test ID
+      const resultData = await getTestResultId(testId).unwrap();
+      
+      // Log the test result ID and test type
+      if (resultData && resultData.result_id) {
+        console.log(`Test result ID for test ${testId} (type: ${testType}): ${resultData.result_id}`);
+        
+        // Store the test result ID in Redux
+        dispatch(setTestResultId({
+          testId: testId,
+          resultId: resultData.result_id
+        }));
+        console.log(`Stored test result ID ${resultData.result_id} in Redux for test ${testId} (type: ${testType})`);
+      } else {
+        console.log(`No result ID available for test ${testId} (type: ${testType}) yet`);
+      }
+    } catch (error) {
+      console.error(`Error getting test result ID for test ${testId} (type: ${testType}):`, error);
+    }
     
+    console.log("Test ready with ID:", testId, "and type:", testType);
+  };
+
+  // Wrapper for getTestResultId that can be passed to TestItem components
+  const fetchTestResultId = async (testId: string) => {
+    try {
+      const resultData = await getTestResultId(testId).unwrap();
+      return resultData;
+    } catch (error) {
+      console.error(`Error polling for test result ID for test ${testId}:`, error);
+      return null;
+    }
+  };
+
+  // Enhanced refetchTests function to ensure it returns a Promise
+  const handleRefetchTests = async () => {
+    console.log("Refetching all battery tests...");
+    try {
+      const result = await refetchTests();
+      console.log("Battery tests refetched successfully");
+      return result;
+    } catch (error) {
+      console.error("Error refetching battery tests:", error);
+      throw error;
+    }
+  };
+
+  // Calculate test statistics based on the battery tests data
+  const getTestStatistics = () => {
+    if (!batteryTests || batteryTests.length === 0) {
+      return {
+        total: 0,
+        notStarted: 0,
+        pending: 0,
+        approved: 0,
+        rejected: 0
+      };
+    }
+
+    const totalTests = batteryTests.length;
+    const notStarted = batteryTests.filter(test => test.status === TestStatus.NotStarted).length;
+    const pending = batteryTests.filter(test => test.status === TestStatus.Pending).length;
+    const approved = batteryTests.filter(test => test.status === TestStatus.Success).length;
+    const rejected = batteryTests.filter(test => test.status === TestStatus.Failed).length;
+
     return {
       total: totalTests,
-      successful: successfulTests,
-      rejected: rejectedTests
+      notStarted,
+      pending,
+      approved,
+      rejected
     };
   };
 
   const startDiagnosticTest = async () => {
     setIsRestartingTests(true);
     setIsTestsStarted(true);
-    setTestStatuses({});
-    setAutomaticTestResults({});
-    setExpandedResults([]);
-    setRunningAutomaticTests([]);
     
     try {
-      await refetchTests();
+      await handleRefetchTests();
     } catch (error) {
       console.error('Error restarting tests:', error);
     } finally {
@@ -351,59 +350,56 @@ const BatteryDetails = () => {
           headerTintColor: '#111827',
         }}
       />
-      <View className="flex-1 px-4 py-6">
-        {/* Battery Information */}
-        <BatteryInfo 
-          batteryDetails={getBatteryDetails()}
-          isBatteryOn={isBatteryOn}
-          isLoading={isLoading || isStartingBattery}
-          isLoadingDeviceCommand={isLoadingDeviceCommand}
-          toggleBattery={toggleBattery}
-          startCommandSent={startCommandSent}
-        />
-
-        {/* Status Alerts */}
-        <StatusAlerts 
-          isBatteryOn={isBatteryOn}
-          isLoading={isLoading || isStartingBattery}
-          isLoadingDeviceCommand={isLoadingDeviceCommand}
-          isRestartingTests={isRestartingTests}
-          isTestsStarted={isTestsStarted}
-          deviceCommandError={deviceCommandError || startBatteryError}
-          startDiagnosticTest={startDiagnosticTest}
-          startCommandSent={startCommandSent}
-          pollingTime={pollingTime}
-          pollingLogs={pollingLogs}
-        />
-
-        {/* Test Statistics */}
-        {isTestsStarted && isBatteryOn && (
-          <TestStatistics 
-            total={getTestStatistics().total}
-            successful={getTestStatistics().successful}
-            rejected={getTestStatistics().rejected}
+      <View className="flex-1 px-3 py-3">
+        {/* Top section - Battery Information */}
+        <View>
+          <BatteryInfo 
+            batteryDetails={getBatteryDetails()}
+            isBatteryOn={isBatteryOn}
+            isLoading={isLoading || isStartingBattery}
+            isLoadingDeviceCommand={isLoadingDeviceCommand}
+            toggleBattery={toggleBattery}
+            startCommandSent={startCommandSent}
           />
-        )}
 
-        {/* Tests List */}
+          {/* Status Alerts */}
+          <StatusAlerts 
+            isBatteryOn={isBatteryOn}
+            isLoading={isLoading || isStartingBattery}
+            isLoadingDeviceCommand={isLoadingDeviceCommand}
+            isRestartingTests={isRestartingTests}
+            isTestsStarted={isTestsStarted}
+            deviceCommandError={deviceCommandError || startBatteryError}
+            startDiagnosticTest={startDiagnosticTest}
+            startCommandSent={startCommandSent}
+            pollingTime={pollingTime}
+            pollingLogs={pollingLogs}
+          />
+
+          {/* Test Statistics */}
+          {isTestsStarted && isBatteryOn && !isLoadingTests && (
+            <TestStatistics 
+              total={getTestStatistics().total}
+              notStarted={getTestStatistics().notStarted}
+              pending={getTestStatistics().pending}
+              approved={getTestStatistics().approved}
+              rejected={getTestStatistics().rejected}
+            />
+          )}
+        </View>
+
+        {/* Tests List - Allow it to expand and take remaining space */}
         {isTestsStarted && isBatteryOn && (
-          <View className="mt-4 flex-1">
+          <View className="mt-2 flex-1">
             <TestsList 
               batteryTests={batteryTests}
               isLoadingTests={isLoadingTests}
               isRestartingTests={isRestartingTests}
               isTestError={isTestError}
-              refetchTests={refetchTests}
-              testStatuses={testStatuses}
-              automaticTestResults={automaticTestResults}
-              expandedResults={expandedResults}
-              runningAutomaticTests={runningAutomaticTests}
-              testTimers={testTimers}
-              onApproveTest={handleApproveTest}
-              onRejectTest={handleRejectTest}
-              onResetStatus={handleResetStatus}
+              refetchTests={handleRefetchTests}
               onStartTest={handleStartTest}
-              onToggleResultExpansion={toggleResultExpansion}
+              onReadyTest={handleReadyTest}
+              getTestResultId={fetchTestResultId}
             />
           </View>
         )}

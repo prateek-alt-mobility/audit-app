@@ -1,49 +1,124 @@
-import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import React from 'react';
+import { TestResultIdData } from '@/store/services/interfaces/batteryTestRun.interface';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { TestStatus } from '../../store/services/interfaces/batteryTests.interface';
 
 export type TestType = 'Manual' | 'Automatic';
-export type TestStatus = 'pending' | 'approved' | 'rejected';
-
-export interface AutomaticTestResult {
-  status: TestStatus;
-  message: string;
-  timestamp: string;
-}
 
 export interface TestItemProps {
   testId: string;
   testName: string;
   testType: TestType;
   testDescription: string;
-  testStatus: TestStatus | undefined;
-  automaticTestResult?: AutomaticTestResult;
-  isRunningTest: boolean;
-  testTimer?: number;
-  isExpanded: boolean;
-  onApprove: (testId: string) => void;
-  onReject: (testId: string) => void;
-  onReset: (testId: string) => void;
-  onStartTest: (testId: string) => void;
-  onToggleExpand: (testId: string) => void;
+  status?: TestStatus;
+  testResultId?: string | null;
+  onStartTest?: (testId: string, testType: TestType) => void;
+  onReadyTest?: (testId: string, testType: TestType) => void;
+  getTestResultId?: (testId: string) => Promise<TestResultIdData | null>;
+  refetchTests?: () => Promise<any>;
 }
+
+const POLLING_INTERVAL = 5000; // 5 seconds
 
 const TestItem: React.FC<TestItemProps> = ({
   testId,
   testName,
   testType,
   testDescription,
-  testStatus,
-  automaticTestResult,
-  isRunningTest,
-  testTimer,
-  isExpanded,
-  onApprove,
-  onReject,
-  onReset,
+  status,
+  testResultId,
   onStartTest,
-  onToggleExpand
+  onReadyTest,
+  getTestResultId,
+  refetchTests
 }) => {
+  const [polling, setPolling] = useState(false);
+  const [pollingSuccess, setPollingSuccess] = useState(false);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ===== Polling Logic =====
+  
+  // Stop polling if the test status changes to Success
+  useEffect(() => {
+    if (status === TestStatus.Success && polling) {
+      console.log(`Test ${testId} status changed to Success, stopping polling`);
+      stopPolling();
+      setPollingSuccess(true);
+      
+      // Refetch tests to update statistics and test results
+      if (refetchTests) {
+        console.log(`Refetching all battery tests after test ${testId} succeeded`);
+        refetchTests();
+      }
+    }
+  }, [status, testId, polling, refetchTests]);
+
+  // Clean up polling interval on unmount
+  useEffect(() => {
+    return () => {
+      stopPolling();
+    };
+  }, []);
+
+  const stopPolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    setPolling(false);
+  };
+
+  // Function to start polling for test results
+  const startPolling = () => {
+    if (!getTestResultId || !testResultId) return;
+    
+    console.log(`Starting polling for test results: ${testId}, result ID: ${testResultId}`);
+    setPolling(true);
+    
+    pollingIntervalRef.current = setInterval(async () => {
+      try {
+        console.log(`Polling for test results: ${testId}, result ID: ${testResultId}`);
+        const response = await getTestResultId(testId);
+        
+        console.log(`Test ${testId} poll response:`, response);
+        
+        if (!response) {
+          console.log(`No response data for test ${testId}`);
+          return;
+        }
+        
+        // Check if we got a success status - handle different possible formats
+        const statusLower = response.status?.toLowerCase?.();
+        const isCompleted = 
+          statusLower === 'success' || 
+          statusLower === 'failed' ||
+          response.status === TestStatus.Success ||
+          response.status === TestStatus.Failed;
+            
+        if (isCompleted) {
+          console.log(`Test ${testId} completed with status: ${response.status}`);
+          stopPolling();
+          setPollingSuccess(true);
+          
+          // Refetch tests to update statistics and test results
+          if (refetchTests) {
+            console.log(`Refetching all battery tests after test ${testId} polling completed`);
+            refetchTests();
+          }
+        } else {
+          // Log additional diagnostics
+          console.log(`Status check: Response status: ${response.status}, type: ${typeof response.status}`);
+          console.log(`Test ${testId} still in progress: `, response);
+        }
+      } catch (error) {
+        console.error(`Error polling for test ${testId} results:`, error);
+      }
+    }, POLLING_INTERVAL);
+  };
+
+  // ===== UI Helper Functions =====
+
   const getTestIcon = () => {
     // Map test names to appropriate icons
     if (testName.toLowerCase().includes('physical verification')) {
@@ -61,21 +136,144 @@ const TestItem: React.FC<TestItemProps> = ({
     }
   };
 
-  const getTestStatusStyles = () => {
-    if (!testStatus) return 'border-gray-200';
+  // ===== Status UI Functions =====
+  
+  const getStatusStyles = () => {
+    if (!status || status === TestStatus.NotStarted) return 'border-gray-200';
     
-    switch (testStatus) {
-      case 'approved':
+    switch (status) {
+      case TestStatus.Success:
         return 'bg-green-50 border-green-500';
-      case 'rejected':
+      case TestStatus.Failed:
         return 'bg-red-50 border-red-500';
+      case TestStatus.Pending:
+        return 'bg-yellow-50 border-yellow-500';
       default:
         return 'border-gray-200';
     }
   };
 
+  const getStatusBadge = () => {
+    if (!status || status === TestStatus.NotStarted) return null;
+    
+    let badgeClass = '';
+    let textClass = '';
+    let statusText = '';
+    
+    switch (status) {
+      case TestStatus.Success:
+        badgeClass = 'bg-green-100 border border-green-500';
+        textClass = 'text-green-600';
+        statusText = '✓ Approved';
+        break;
+      case TestStatus.Failed:
+        badgeClass = 'bg-red-100 border border-red-500';
+        textClass = 'text-red-600';
+        statusText = '✕ Failed';
+        break;
+      case TestStatus.Pending:
+        badgeClass = 'bg-yellow-100 border border-yellow-500';
+        textClass = 'text-yellow-600';
+        statusText = '⟳ Pending';
+        break;
+      default:
+        return null;
+    }
+    
+    return (
+      <View className="mb-2">
+        <View className={`self-start rounded-full px-3 py-1 ${badgeClass}`}>
+          <Text className={`text-sm font-medium ${textClass}`}>{statusText}</Text>
+        </View>
+        
+        {/* Add pill for pending status indicating test can be started */}
+        {status === TestStatus.Pending && (
+          <View className="self-start rounded-full px-3 py-1 mt-1 bg-blue-100 border border-blue-500">
+            <Text className="text-sm font-medium text-blue-600">This test can be started now</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  // ===== Button Handlers and UI =====
+
+  const isAutomaticPendingTest = testType === 'Automatic' && status === TestStatus.Pending && testResultId;
+  
+  const handleButtonPress = () => {
+    // Special handling for Automatic tests with Pending status and testResultId
+    if (isAutomaticPendingTest) {
+      console.log('Starting automatic test polling for test ID:', testId);
+      startPolling();
+      return;
+    }
+    
+    if (status === TestStatus.Success || status === TestStatus.Failed) {
+      // For Success or Failed status, rerun the test by calling onReadyTest
+      if (onReadyTest) {
+        console.log('Rerunning test with ID:', testId, 'and type:', testType);
+        onReadyTest(testId, testType);
+      } else {
+        console.log('Ready test function not provided for test ID:', testId);
+      }
+    } else if (!status || status === TestStatus.NotStarted) {
+      // Call the ready test function for not started tests
+      if (onReadyTest) {
+        console.log('Ready test with ID:', testId, 'and type:', testType);
+        onReadyTest(testId, testType);
+      } else {
+        console.log('Ready test function not provided for test ID:', testId);
+      }
+    } else if (status === TestStatus.Pending) {
+      // For Pending tests with Manual type or no testResultId, call onStartTest
+      if (onStartTest) {
+        console.log('Starting test with ID:', testId, 'and type:', testType);
+        onStartTest(testId, testType);
+      } else {
+        console.log('Start test function not provided for test ID:', testId);
+      }
+    } else {
+      // For other statuses, just log
+      console.log('Test button clicked for test ID:', testId, 'with status:', status);
+    }
+  };
+
+  const getButtonText = () => {
+    if (isAutomaticPendingTest) {
+      return "Start Automatic Test";
+    } else if (status === TestStatus.Success || status === TestStatus.Failed) {
+      return "Rerun Test";
+    } else if (!status || status === TestStatus.NotStarted) {
+      return "Ready Test";
+    }
+    return "Start Test";
+  };
+
+  const getButtonColor = () => {
+    if (status === TestStatus.Success) {
+      return "bg-green-600";
+    } else if (status === TestStatus.Failed) {
+      return "bg-red-600";
+    } else if (status === TestStatus.Pending) {
+      return "bg-green-600";
+    }
+    return "bg-purple-600";
+  };
+
+  const getButtonIcon = () => {
+    if (isAutomaticPendingTest) {
+      return "flash";
+    } else if (status === TestStatus.Success || status === TestStatus.Failed) {
+      return "refresh";
+    }
+    return "play-circle";
+  };
+
+  // ===== Render Component =====
+  
   return (
-    <View className={`bg-white rounded-lg p-5 shadow-sm border mt-4 ${getTestStatusStyles()}`}>
+    <View className={`rounded-lg p-5 shadow-sm border mt-4 ${getStatusStyles()}`}>
+      {/* Test header section */}
       <View className="flex-row items-center mb-3">
         {getTestIcon()}
         <View className="flex-1 ml-3">
@@ -85,9 +283,9 @@ const TestItem: React.FC<TestItemProps> = ({
           <View className="flex-row items-center mt-1">
             <Text className={`text-sm ${testType === 'Manual' ? 'text-blue-600' : 'text-purple-600'}`}>
               {testType === 'Manual' ? (
-                <Ionicons name="hand-left" size={14} color="#2563eb" />
+                <MaterialCommunityIcons name="hand-back-left" size={14} color="#2563eb" />
               ) : (
-                <Ionicons name="flash" size={14} color="#9333ea" />
+                <MaterialCommunityIcons name="flash" size={14} color="#9333ea" />
               )}
               {' '}{testType} Test
             </Text>
@@ -95,136 +293,67 @@ const TestItem: React.FC<TestItemProps> = ({
         </View>
       </View>
 
-      <Text className="text-gray-600 mb-4 text-sm">
-        {testDescription}
-      </Text>
+      {/* Status badges */}
+      {getStatusBadge()}
 
-      {/* Status Pills for Manual Tests */}
-      {testType === 'Manual' && testStatus && (
-        <View className="mb-4">
-          <View 
-            className={`self-start rounded-full px-3 py-1 ${
-              testStatus === 'approved' 
-                ? 'bg-green-100 border border-green-500' 
-                : 'bg-red-100 border border-red-500'
-            }`}
-          >
-            <Text 
-              className={`text-sm font-medium ${
-                testStatus === 'approved' 
-                  ? 'text-green-600' 
-                  : 'text-red-600'
-              }`}
-            >
-              {testStatus === 'approved' ? '✓ Approved' : '✕ Rejected'}
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* Automatic Test Results */}
-      {testType === 'Automatic' && automaticTestResult && (
-        <View className="mb-4">
-          <TouchableOpacity
-            onPress={() => onToggleExpand(testId)}
-            className={`flex-row items-center justify-between p-3 rounded-lg ${
-              automaticTestResult.status === 'approved'
-                ? 'bg-green-50 border border-green-200'
-                : 'bg-red-50 border border-red-200'
-            }`}
-          >
-            <View className="flex-row items-center">
-              <MaterialCommunityIcons
-                name={automaticTestResult.status === 'approved' ? 'check-circle' : 'alert-circle'}
-                size={20}
-                color={automaticTestResult.status === 'approved' ? '#22c55e' : '#ef4444'}
-              />
-              <Text className={`ml-2 font-medium ${
-                automaticTestResult.status === 'approved' ? 'text-green-600' : 'text-red-600'
-              }`}>
-                Test {automaticTestResult.status === 'approved' ? 'Passed' : 'Failed'}
-              </Text>
-            </View>
-            <MaterialCommunityIcons
-              name={isExpanded ? 'chevron-up' : 'chevron-down'}
-              size={24}
-              color="#6b7280"
-            />
-          </TouchableOpacity>
+      {/* Test description */}
+      <View className="mt-2">
+        <Text className="text-gray-600 mb-4 text-sm">
+          {testDescription}
+        </Text>
+      </View>
+      
+      {/* Test Result ID and polling status */}
+      {testResultId && (
+        <View className="mb-4 bg-gray-50 p-2 rounded-md border border-gray-200">
+          <Text className="text-xs text-gray-500">Test Result ID:</Text>
+          <Text className="text-sm text-gray-700 font-mono">{testResultId}</Text>
           
-          {isExpanded && (
-            <View className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
-              <Text className="text-gray-700 text-sm">
-                {automaticTestResult.message}
-              </Text>
-              <Text className="text-gray-500 text-xs mt-2">
-                Completed at: {automaticTestResult.timestamp}
+          {/* Polling indicator for automatic tests */}
+          {testType === 'Automatic' && polling && (
+            <View className="flex-row items-center mt-2">
+              <ActivityIndicator size="small" color="#9333ea" />
+              <Text className="text-xs text-purple-600 ml-2">Polling for test results...</Text>
+            </View>
+          )}
+          
+          {/* Test result message */}
+          {testType === 'Automatic' && (status === TestStatus.Success || status === TestStatus.Failed) && (
+            <View className={`mt-2 ${status === TestStatus.Success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} p-2 rounded-md border`}>
+              <Text className={`text-xs ${status === TestStatus.Success ? 'text-green-600' : 'text-red-600'}`}>
+                {status === TestStatus.Success ? 'Test completed successfully!' : 'Test failed!'}
               </Text>
             </View>
           )}
         </View>
       )}
-
-      <View className="flex-row justify-end space-x-3 mt-2">
-        {testType === 'Manual' && !testStatus ? (
-          <>
-            <TouchableOpacity
-              onPress={() => onReject(testId)}
-              className="flex-row items-center bg-red-50 border border-red-200 px-4 py-2 rounded-lg"
-            >
-              <Ionicons name="close-circle" size={18} color="#ef4444" />
-              <Text className="text-red-600 ml-2 font-medium">Reject</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => onApprove(testId)}
-              className="flex-row ml-3 items-center bg-green-50 border border-green-200 px-4 py-2 rounded-lg"
-            >
-              <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
-              <Text className="text-green-600 ml-2 font-medium">Approve</Text>
-            </TouchableOpacity>
-          </>
-        ) : testType === 'Manual' ? (
-          <TouchableOpacity
-            onPress={() => onReset(testId)}
-            className="flex-row items-center bg-blue-50 border border-blue-200 px-4 py-2 rounded-lg"
-          >
-            <Ionicons name="refresh" size={18} color="#3b82f6" />
-            <Text className="text-blue-600 ml-2 font-medium">Reset Status</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            onPress={() => onStartTest(testId)}
-            disabled={isRunningTest}
-            className={`flex-row items-center ${
-              isRunningTest
-                ? 'bg-purple-50 opacity-50'
-                : 'bg-purple-50 border border-purple-200'
-            } px-4 py-2 rounded-lg`}
-          >
-            {isRunningTest ? (
-              <>
-                <ActivityIndicator size="small" color="#9333ea" />
-                <Text className="text-purple-600 ml-2 font-medium">
-                  Running Test... {testTimer}s
-                </Text>
-              </>
-            ) : (
-              <>
-                <FontAwesome5 
-                  name={automaticTestResult ? "redo" : "play"} 
-                  size={14} 
-                  color="#9333ea" 
-                />
-                <Text className="text-purple-600 ml-2 font-medium">
-                  {automaticTestResult ? "Test Again" : "Start Test"}
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-        )}
+      
+      {/* Action button */}
+      <View className="flex-row justify-end">
+        <TouchableOpacity 
+          onPress={handleButtonPress}
+          className={`${getButtonColor()} rounded-lg px-4 py-2 flex-row items-center`}
+          disabled={polling} // Disable button during polling
+        >
+          {polling ? (
+            <>
+              <ActivityIndicator size="small" color="white" />
+              <Text className="text-white font-medium ml-2">Testing...</Text>
+            </>
+          ) : (
+            <>
+              <MaterialCommunityIcons 
+                name={getButtonIcon()}
+                size={18} 
+                color="white" 
+              />
+              <Text className="text-white font-medium ml-2">{getButtonText()}</Text>
+            </>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-export default TestItem; 
+export default TestItem;

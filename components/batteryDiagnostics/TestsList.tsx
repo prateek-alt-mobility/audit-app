@@ -1,30 +1,20 @@
+import { TestResultIdData } from '@/store/services/interfaces/batteryTestRun.interface';
 import React from 'react';
 import { ActivityIndicator, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import TestItem, { AutomaticTestResult, TestStatus, TestType } from './TestItem';
-
-interface TestData {
-  test_id: string;
-  test_name: string;
-  test_type: string;
-  test_description: string;
-}
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { BatteryTest } from '../../store/services/interfaces/batteryTests.interface';
+import TestItem, { TestType } from './TestItem';
 
 interface TestsListProps {
-  batteryTests?: TestData[];
+  batteryTests?: BatteryTest[];
   isLoadingTests: boolean;
   isRestartingTests: boolean;
   isTestError: boolean;
-  refetchTests: () => void;
-  testStatuses: Record<string, TestStatus>;
-  automaticTestResults: Record<string, AutomaticTestResult>;
-  expandedResults: string[];
-  runningAutomaticTests: string[];
-  testTimers: Record<string, number>;
-  onApproveTest: (testId: string) => void;
-  onRejectTest: (testId: string) => void;
-  onResetStatus: (testId: string) => void;
-  onStartTest: (testId: string) => void;
-  onToggleResultExpansion: (testId: string) => void;
+  refetchTests: () => Promise<any>;
+  onStartTest?: (testId: string, testType: TestType) => void;
+  onReadyTest?: (testId: string, testType: TestType) => void;
+  getTestResultId?: (testId: string) => Promise<TestResultIdData | null>;
 }
 
 const TestsList: React.FC<TestsListProps> = ({
@@ -33,17 +23,13 @@ const TestsList: React.FC<TestsListProps> = ({
   isRestartingTests,
   isTestError,
   refetchTests,
-  testStatuses,
-  automaticTestResults,
-  expandedResults,
-  runningAutomaticTests,
-  testTimers,
-  onApproveTest,
-  onRejectTest,
-  onResetStatus,
   onStartTest,
-  onToggleResultExpansion
+  onReadyTest,
+  getTestResultId
 }) => {
+  // Get test result IDs from Redux
+  const { testResultIds } = useSelector((state: RootState) => state.battery);
+
   if (isLoadingTests || isRestartingTests) {
     return (
       <View className="items-center py-4">
@@ -71,33 +57,47 @@ const TestsList: React.FC<TestsListProps> = ({
     );
   }
 
+  if (!batteryTests || batteryTests.length === 0) {
+    return (
+      <View className="bg-gray-50 border border-gray-200 rounded-lg p-4 items-center">
+        <Text className="text-gray-600 text-center">
+          No tests available. Please check your connection and try again.
+        </Text>
+        <TouchableOpacity
+          onPress={refetchTests}
+          className="bg-blue-500 py-2 px-4 rounded-lg mt-2"
+        >
+          <Text className="text-white text-center">Refresh Tests</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView 
-      className="space-y-4" 
-      contentContainerStyle={{ 
-        paddingBottom: 100 
-      }}
-    >
-      {batteryTests?.map((test) => (
-        <TestItem
-          key={test.test_id}
-          testId={test.test_id}
-          testName={test.test_name}
-          testType={test.test_type as TestType}
-          testDescription={test.test_description}
-          testStatus={testStatuses[test.test_id]}
-          automaticTestResult={automaticTestResults[test.test_id]}
-          isRunningTest={runningAutomaticTests.includes(test.test_id)}
-          testTimer={testTimers[test.test_id]}
-          isExpanded={expandedResults.includes(test.test_id)}
-          onApprove={onApproveTest}
-          onReject={onRejectTest}
-          onReset={onResetStatus}
-          onStartTest={onStartTest}
-          onToggleExpand={onToggleResultExpansion}
-        />
-      ))}
-    </ScrollView>
+    <View className="flex-1">
+      <ScrollView 
+        className="space-y-2" 
+        contentContainerStyle={{ 
+          paddingBottom: 100 
+        }}
+      >
+        {batteryTests.map((test) => (
+          <TestItem
+            key={test.test_id}
+            testId={test.test_id}
+            testName={test.test_name}
+            testType={test.test_type as TestType}
+            testDescription={test.test_description}
+            status={test.status}
+            testResultId={testResultIds[test.test_id] || null}
+            onStartTest={onStartTest}
+            onReadyTest={onReadyTest}
+            getTestResultId={getTestResultId}
+            refetchTests={refetchTests}
+          />
+        ))}
+      </ScrollView>
+    </View>
   );
 };
 

@@ -11,6 +11,7 @@ export interface BatteryState {
     bmsNumber?: string;
     softwareVersion?: string;
   };
+  testResultIds: Record<string, string>; // Store test result IDs by test ID
   isLoading: boolean;
   error: string | null;
 }
@@ -18,6 +19,7 @@ export interface BatteryState {
 const initialState: BatteryState = {
   serialNumber: "",
   batteryData: {},
+  testResultIds: {},
   isLoading: false,
   error: null,
 };
@@ -32,6 +34,12 @@ const batterySlice = createSlice({
     setBatteryData: (state, action: PayloadAction<BatteryState["batteryData"]>) => {
       state.batteryData = action.payload;
     },
+    setTestResultId: (state, action: PayloadAction<{ testId: string; resultId: string }>) => {
+      const { testId, resultId } = action.payload;
+      state.testResultIds[testId] = resultId;
+    },
+  
+   
     parseQRCodeData: (state, action: PayloadAction<string>) => {
       const qrData = action.payload;
       
@@ -68,6 +76,7 @@ const batterySlice = createSlice({
     clearBatteryData: (state) => {
       state.serialNumber = "";
       state.batteryData = {};
+      state.testResultIds = {};
       state.error = null;
     },
     setError: (state, action: PayloadAction<string>) => {
@@ -82,6 +91,8 @@ const batterySlice = createSlice({
 export const { 
   setSerialNumber, 
   setBatteryData, 
+  setTestResultId,
+
   parseQRCodeData, 
   clearBatteryData, 
   setError, 

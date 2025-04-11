@@ -3,7 +3,7 @@ import { StartDeviceResponse } from './interfaces/batteryDevice.interface';
 import { CommandDetailData, CommandDetailResponse } from './interfaces/batteryDeviceCommand.interface';
 import { ApprovalRequest, ApprovalResponse } from './interfaces/batteryTestApproval.interface';
 import { TestResultsResponse } from './interfaces/batteryTestResults.interface';
-import { Approval, RunTestRequest, TestRun, TestRunResponse } from './interfaces/batteryTestRun.interface';
+import { Approval, RunTestRequest, SimpleSuccessResponse, TestResultIdData, TestResultIdResponse, TestRun } from './interfaces/batteryTestRun.interface';
 import { BatteryTest, BatteryTestsResponse } from './interfaces/batteryTests.interface';
 
 /**
@@ -11,14 +11,14 @@ import { BatteryTest, BatteryTestsResponse } from './interfaces/batteryTests.int
  * 
  * @example
  * // In your component:
- * const { data, isLoading } = useGetBatteryTestRunByIdQuery('test-id');
+ * const { data, isLoading } = useGetTestResultIdQuery('test-id');
  * 
  * // Start polling when a test is run
  * React.useEffect(() => {
- *   if (data?.status === TestStatus.Pending) {
+ *   if (data?.status === "Pending") {
  *     const intervalId = setInterval(() => {
  *       refetch();
- *       if (data?.status === TestStatus.Success || data?.status === TestStatus.Failed) {
+ *       if (data?.status === "Success" || data?.status === "Failed") {
  *         clearInterval(intervalId);
  *       }
  *     }, 5000);
@@ -42,24 +42,23 @@ export const batteryDiagnosticApi = api.injectEndpoints({
     }),
 
     // Run a battery diagnostic test
-    runBatteryTest: builder.mutation<TestRun, RunTestRequest>({
+    runBatteryTest: builder.mutation<SimpleSuccessResponse, RunTestRequest>({
       query: (requestData) => ({
         url: '/battery/battery-diagnostic-tool/run-test',
         method: 'POST',
         body: requestData,
       }),
-      // Transform the response to extract the data
-      transformResponse: (response: TestRunResponse) => response.data,
+      // No need to transform the response as we want to return the entire object
     }),
 
-    // Get a specific test run by ID
-    getBatteryTestRunById: builder.query<TestRun, string>({
+    // Get a test result by ID 
+    getTestResultId: builder.mutation<TestResultIdData, string>({
       query: (testRunId) => ({
         url: `/battery/battery-diagnostic-tool/test/${testRunId}`,
         method: 'GET',
       }),
       // Transform the response to extract the data
-      transformResponse: (response: TestRunResponse) => response.data,
+      transformResponse: (response: TestResultIdResponse) => response.data,
     }),
 
     // Get all test results for a specific test
@@ -111,7 +110,7 @@ export const batteryDiagnosticApi = api.injectEndpoints({
 export const {
   useGetBatteryTestsQuery,
   useRunBatteryTestMutation,
-  useGetBatteryTestRunByIdQuery,
+  useGetTestResultIdMutation,
   useGetAllTestResultsQuery,
   useApproveTestMutation,
   useGetDeviceCommandDetailQuery,
