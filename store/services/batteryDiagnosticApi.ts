@@ -1,4 +1,5 @@
 import { api } from './api';
+import { StartDeviceResponse } from './interfaces/batteryDevice.interface';
 import { CommandDetailData, CommandDetailResponse } from './interfaces/batteryDeviceCommand.interface';
 import { ApprovalRequest, ApprovalResponse } from './interfaces/batteryTestApproval.interface';
 import { TestResultsResponse } from './interfaces/batteryTestResults.interface';
@@ -31,11 +32,11 @@ import { BatteryTest, BatteryTestsResponse } from './interfaces/batteryTests.int
 export const batteryDiagnosticApi = api.injectEndpoints({
   endpoints: (builder) => ({
     // Get all battery diagnostic tests
-    getBatteryTests: builder.query<BatteryTest[], void>({
-      query: () => ({
-        url: '/battery/battery-diagnostic-tool/tests',
-        method: 'GET',
-      }),
+    getBatteryTests: builder.query<BatteryTest[], string | undefined>({
+      query: (batterySerialNumber) => 
+        batterySerialNumber 
+          ? `/battery/battery-diagnostic-tool/tests/${batterySerialNumber}`
+          : `/battery/battery-diagnostic-tool/tests`,
       // Transform the response to extract the data array
       transformResponse: (response: BatteryTestsResponse) => response.data,
     }),
@@ -82,6 +83,18 @@ export const batteryDiagnosticApi = api.injectEndpoints({
       transformResponse: (response: ApprovalResponse) => response.data,
     }),
 
+    // Start a battery device by ID
+    startBattery: builder.mutation<{ message: string }, string>({
+      query: (deviceId) => ({
+        url: `/battery/battery-diagnostic-tool/start-device/${deviceId}`,
+        method: 'POST',
+      }),
+      // Transform the response to extract the message
+      transformResponse: (response: StartDeviceResponse) => ({
+        message: response.message,
+      }),
+    }),
+
     // Get device command details by ID
     getDeviceCommandDetail: builder.query<CommandDetailData, string>({
       query: (commandId) => ({
@@ -102,4 +115,5 @@ export const {
   useGetAllTestResultsQuery,
   useApproveTestMutation,
   useGetDeviceCommandDetailQuery,
-} = batteryDiagnosticApi; 
+  useStartBatteryMutation,
+} = batteryDiagnosticApi;

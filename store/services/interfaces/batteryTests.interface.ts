@@ -1,24 +1,18 @@
 import { TestType } from './batteryEnums';
 
-export interface Threshold {
-  id: string;
-  parameter: 'charge_ah';
-  min_value: number;
-  max_value: number;
-  unit: 'Ah';
-  created_at: string;
-  updated_at: string;
+export enum TestStatus {
+  NotStarted = 'NotStarted',
+  Success = 'Success',
+  Failed = 'Failed',
+  Pending = 'Pending'
 }
 
 export interface BatteryTest {
-  id: string;
+  test_id: string;
   test_name: string;
   test_description: string;
   test_type: TestType;
-  test_ran_time: string | null;
-  thresholds: Threshold[];
-  created_at: string;
-  updated_at: string;
+  status: TestStatus;
 }
 
 export interface BatteryTestsResponse {
