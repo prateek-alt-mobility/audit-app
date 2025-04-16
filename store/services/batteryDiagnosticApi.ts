@@ -1,4 +1,4 @@
-import { api } from './api';
+import { batteryApi } from './batteryApi';
 import { StartDeviceResponse } from './interfaces/batteryDevice.interface';
 import { CommandDetailData, CommandDetailResponse } from './interfaces/batteryDeviceCommand.interface';
 import { ApprovalRequest } from './interfaces/batteryTestApproval.interface';
@@ -28,15 +28,15 @@ import { BatteryTest, BatteryTestsResponse } from './interfaces/batteryTests.int
  * }, [data, refetch]);
  */
 
-// Extend the base API with battery diagnostic specific endpoints
-export const batteryDiagnosticApi = api.injectEndpoints({
+// Extend the battery API with battery diagnostic specific endpoints
+export const batteryDiagnosticApi = batteryApi.injectEndpoints({
   endpoints: (builder) => ({
     // Get all battery diagnostic tests
     getBatteryTests: builder.query<BatteryTest[], string | undefined>({
       query: (batterySerialNumber) => 
         batterySerialNumber 
-          ? `/battery/battery-diagnostic-tool/tests/${batterySerialNumber}`
-          : `/battery/battery-diagnostic-tool/tests`,
+          ? `/battery-diagnostic-tool/tests/${batterySerialNumber}`
+          : `/battery-diagnostic-tool/tests`,
       // Transform the response to extract the data array
       transformResponse: (response: BatteryTestsResponse) => response.data,
     }),
@@ -44,7 +44,7 @@ export const batteryDiagnosticApi = api.injectEndpoints({
     // Run a battery diagnostic test
     runBatteryTest: builder.mutation<SimpleSuccessResponse, RunTestRequest>({
       query: (requestData) => ({
-        url: '/battery/battery-diagnostic-tool/run-test',
+        url: '/battery-diagnostic-tool/run-test',
         method: 'POST',
         body: requestData,
       }),
@@ -54,7 +54,7 @@ export const batteryDiagnosticApi = api.injectEndpoints({
     // Get a test result by ID 
     getTestResultId: builder.mutation<TestResultIdData, string>({
       query: (testRunId) => ({
-        url: `/battery/battery-diagnostic-tool/test/${testRunId}`,
+        url: `/battery-diagnostic-tool/test/${testRunId}`,
         method: 'GET',
       }),
       // Transform the response to extract the data
@@ -64,7 +64,7 @@ export const batteryDiagnosticApi = api.injectEndpoints({
     // Get all test results for a specific test
     getAllTestResults: builder.query<TestRun[], string>({
       query: (testId) => ({
-        url: `/battery/battery-diagnostic-tool/test/${testId}/results`,
+        url: `/battery-diagnostic-tool/test/${testId}/results`,
         method: 'GET',
       }),
       // Transform the response to extract the data array
@@ -74,7 +74,7 @@ export const batteryDiagnosticApi = api.injectEndpoints({
     // Approve or reject a test
     approveTest: builder.mutation<SimpleSuccessResponse, ApprovalRequest>({
       query: (requestData) => ({
-        url: '/battery/battery-diagnostic-tool/test/approve',
+        url: '/battery-diagnostic-tool/test/approve',
         method: 'POST',
         body: requestData,
       }),
@@ -84,7 +84,7 @@ export const batteryDiagnosticApi = api.injectEndpoints({
     // Start a battery device by ID
     startBattery: builder.mutation<{ message: string }, string>({
       query: (deviceId) => ({
-        url: `/battery/battery-diagnostic-tool/start-device/${deviceId}`,
+        url: `/battery-diagnostic-tool/start-device/${deviceId}`,
         method: 'POST',
       }),
       // Transform the response to extract the message
@@ -96,7 +96,7 @@ export const batteryDiagnosticApi = api.injectEndpoints({
     // Get device command details by ID
     getDeviceCommandDetail: builder.query<CommandDetailData, string>({
       query: (commandId) => ({
-        url: `/battery/device/command-detail/${commandId}`,
+        url: `/device/command-detail/${commandId}`,
         method: 'GET',
       }),
       // Transform the response to extract the data

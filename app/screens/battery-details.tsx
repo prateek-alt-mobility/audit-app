@@ -135,7 +135,7 @@ const BatteryDetails = () => {
     }
     
     if (deviceCommandError) {
-      console.error("Device command error:", deviceCommandError);
+      // console.error("Device command error:", deviceCommandError);
     }
   }, [deviceCommandDetail, deviceCommandError, effectiveSerialNumber, startCommandSent, isBatteryOn]);
 

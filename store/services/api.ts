@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const API_BASE_URL = "https://dev-api.alt-mobility.com";
+const API_BASE_URL = process.env.EXPO_PUBLIC_BASE_URL || "https://dev-api.alt-mobility.com";
 
 // Define a service using a base URL and expected endpoints
 export const api = createApi({
