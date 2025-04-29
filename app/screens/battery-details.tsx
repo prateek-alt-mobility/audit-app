@@ -198,7 +198,7 @@ const BatteryDetails = () => {
     try {
       // Call the runBatteryTest API
       const payload = {
-        device_id: effectiveSerialNumber,
+        imei_id: effectiveSerialNumber,
         test_id: testId,
       };
       

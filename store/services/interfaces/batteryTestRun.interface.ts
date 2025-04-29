@@ -47,7 +47,7 @@ export interface Approval {
 
 export interface TestRun {
   id: string;
-  device_id: string;
+  imei_id: string;
   test_id: string;
   test_type: TestType;
   status: TestStatus;
@@ -58,6 +58,6 @@ export interface TestRun {
 }
 
 export interface RunTestRequest {
-  device_id: string;
+  imei_id: string;
   test_id: string;
 } 
