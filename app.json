@@ -43,7 +43,8 @@
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
           "recordAudioAndroid": true
         }
-      ]
+      ],
+      "expo-updates"
     ],
     "experiments": {
       "typedRoutes": true
@@ -56,6 +57,12 @@
         "projectId": "4dfcfa0b-90fa-4c83-a381-e53e5abe4986"
       }
     },
-    "owner": "ritvik-alt"
+    "owner": "ritvik-alt",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4dfcfa0b-90fa-4c83-a381-e53e5abe4986"
+    }
   }
 }
