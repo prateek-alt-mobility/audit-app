@@ -42,3 +42,33 @@ app-example
 # Lock files
 package-lock.json
 yarn.lock
+# Mobile builds
+*.apk
+*.aab
+*.ipa
+*.app
+
+# iOS specific
+ios/
+*.xcodeproj/
+*.xcworkspace/
+Pods/
+*.pbxproj
+*.plist
+*.xcconfig
+
+# Android specific
+android/
+*.gradle
+local.properties
+gradle-wrapper.jar
+/.idea
+*.iml
+.gradle/
+build/
+release/
+debug/
+captures/
+.externalNativeBuild
+.cxx
+
