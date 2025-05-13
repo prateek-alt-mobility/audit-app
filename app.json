@@ -44,7 +44,9 @@
           "recordAudioAndroid": true
         }
       ],
-      "expo-updates"
+      "expo-updates",
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
@@ -58,9 +60,7 @@
       }
     },
     "owner": "ritvik-alt",
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/4dfcfa0b-90fa-4c83-a381-e53e5abe4986"
     }

@@ -30,7 +30,7 @@ const BatteryDetails = () => {
   // New states for UI updates
   const [pollingTime, setPollingTime] = useState(0);
   const [pollingLogs, setPollingLogs] = useState<string[]>([]);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const {
     data: batteryTests,
@@ -228,7 +228,7 @@ const BatteryDetails = () => {
         
         // If no test result ID in response, try to get it separately
         try {
-          const resultData = await getTestResultId(testId).unwrap();
+          const resultData = await getTestResultId({testRunId: testId, imeiId: effectiveSerialNumber}).unwrap();
           if (resultData && resultData.result_id) {
             // Store the test result ID in Redux
             dispatch(setTestResultId({
@@ -258,7 +258,7 @@ const BatteryDetails = () => {
 
     try {
       // Call the getTestResultId mutation with the test ID
-      const resultData = await getTestResultId(testId).unwrap();
+      const resultData = await getTestResultId({testRunId: testId, imeiId: effectiveSerialNumber}).unwrap();
       
       // Log the test result ID and test type
       if (resultData && resultData.result_id) {
@@ -333,7 +333,7 @@ const BatteryDetails = () => {
   // Wrapper for getTestResultId that can be passed to TestItem components
   const fetchTestResultId = async (testId: string) => {
     try {
-      const resultData = await getTestResultId(testId).unwrap();
+      const resultData = await getTestResultId({testRunId: testId, imeiId: effectiveSerialNumber}).unwrap();
       return resultData;
     } catch (error) {
       console.error(`Error polling for test result ID for test ${testId}:`, error);

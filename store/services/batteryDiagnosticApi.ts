@@ -52,9 +52,9 @@ export const batteryDiagnosticApi = batteryApi.injectEndpoints({
     }),
 
     // Get a test result by ID 
-    getTestResultId: builder.mutation<TestResultIdData, string>({
-      query: (testRunId) => ({
-        url: `/battery-diagnostic-tool/test/${testRunId}`,
+    getTestResultId: builder.mutation<TestResultIdData, {testRunId: string, imeiId: string}>({
+      query: ({testRunId, imeiId}) => ({
+        url: `/battery-diagnostic-tool/test/${testRunId}/${imeiId}`,
         method: 'GET',
       }),
       // Transform the response to extract the data
